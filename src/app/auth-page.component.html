@@ -67,7 +67,7 @@
           <button *ngIf="mode === 'login' && passkeySupported" class="secondary-btn" (click)="loginWithPasskey()" [disabled]="passkeyBusy">
             {{ passkeyBusy ? 'Face ID...' : 'Inloggen met Face ID' }}
           </button>
-          <p class="hint-text" *ngIf="mode === 'login' && passkeySupported">Gebruik Face ID of Touch ID op je toestel.</p>
+          <p class="hint-text" *ngIf="mode === 'login' && passkeySupported">Gebruik Face ID of Touch ID. Email is niet nodig als je passkey al is ingesteld.</p>
           <p class="status-text" *ngIf="statusMessage">{{ statusMessage }}</p>
         </div>
       </section>

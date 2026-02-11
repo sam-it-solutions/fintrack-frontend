@@ -305,7 +305,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
       await firstValueFrom(this.api.passkeyRegisterFinish(this.token, start.challengeId, payload));
       this.statusMessage = 'Face ID is geactiveerd op dit toestel.';
     } catch (err: any) {
-      this.statusMessage = err?.error?.message ?? err?.message ?? 'Face ID activeren mislukt.';
+      if (err?.status === 401 || err?.status === 403) {
+        this.statusMessage = 'Log opnieuw in om Face ID te activeren.';
+      } else {
+        this.statusMessage = err?.error?.message ?? err?.message ?? 'Face ID activeren mislukt.';
+      }
     } finally {
       this.passkeyBusy = false;
     }

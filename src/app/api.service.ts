@@ -195,8 +195,10 @@ export class ApiService {
     );
   }
 
-  passkeyLoginStart(email: string): Observable<PasskeyStartResponse> {
-    return this.http.post<PasskeyStartResponse>(`${this.baseUrl}/api/auth/passkeys/login/start`, { email });
+  passkeyLoginStart(email?: string): Observable<PasskeyStartResponse> {
+    const trimmed = email?.trim();
+    const payload = trimmed ? { email: trimmed } : {};
+    return this.http.post<PasskeyStartResponse>(`${this.baseUrl}/api/auth/passkeys/login/start`, payload);
   }
 
   passkeyLoginFinish(challengeId: string, credential: any): Observable<AuthResponse> {

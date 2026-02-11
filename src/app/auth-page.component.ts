@@ -52,14 +52,10 @@ export class AuthPageComponent {
       this.statusMessage = 'Face ID is niet beschikbaar op dit toestel.';
       return;
     }
-    if (!this.email.trim()) {
-      this.statusMessage = 'Vul je email in om Face ID te gebruiken.';
-      return;
-    }
     this.passkeyBusy = true;
     this.statusMessage = '';
     try {
-      const start = await firstValueFrom(this.api.passkeyLoginStart(this.email.trim()));
+      const start = await firstValueFrom(this.api.passkeyLoginStart(this.email));
       const publicKey = toPublicKeyRequestOptions(start.options);
       const credential = await navigator.credentials.get({ publicKey }) as PublicKeyCredential | null;
       if (!credential) {
