@@ -173,6 +173,21 @@ export interface TransactionResponse {
   counterpartyIban?: string;
 }
 
+export interface AdminSettingsResponse {
+  syncEnabled: boolean;
+  syncIntervalMs: number;
+  aiEnabled: boolean;
+  aiModel?: string;
+  updatedAt?: string;
+}
+
+export interface AdminSettingsRequest {
+  syncEnabled?: boolean;
+  syncIntervalMs?: number;
+  aiEnabled?: boolean;
+  aiModel?: string | null;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -199,6 +214,14 @@ export class ApiService {
       { challengeId, credential },
       this.authHeaders(token)
     );
+  }
+
+  getAdminSettings(token: string): Observable<AdminSettingsResponse> {
+    return this.http.get<AdminSettingsResponse>(`${this.baseUrl}/api/admin/settings`, this.authHeaders(token));
+  }
+
+  updateAdminSettings(token: string, payload: AdminSettingsRequest): Observable<AdminSettingsResponse> {
+    return this.http.put<AdminSettingsResponse>(`${this.baseUrl}/api/admin/settings`, payload, this.authHeaders(token));
   }
 
   passkeyLoginStart(email?: string): Observable<PasskeyStartResponse> {

@@ -13,13 +13,15 @@ import {
   EnableBankingAspspResponse,
   HouseholdResponse,
   HouseholdBalanceResponse,
-  SpendingCategorySummary
+  SpendingCategorySummary,
+  AdminSettingsResponse,
+  AdminSettingsRequest
 } from './api.service';
 import { SessionService } from './session.service';
 import { Subscription, firstValueFrom } from 'rxjs';
 import { isPasskeySupported, serializeRegistrationCredential, toPublicKeyCreationOptions } from './webauthn.utils';
 
-type SectionKey = 'overview' | 'accounts' | 'spending' | 'transactions' | 'audit' | 'household' | 'connections';
+type SectionKey = 'overview' | 'accounts' | 'spending' | 'transactions' | 'audit' | 'household' | 'connections' | 'admin';
 type ToastType = 'success' | 'error' | 'info';
 
 @Component({
@@ -120,6 +122,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
   householdBalanceMonth = new Date().toISOString().slice(0, 7);
   includeSharedBalance = false;
   recurringMonths = 6;
+  adminSettings: AdminSettingsResponse | null = null;
+  adminSettingsDraft: AdminSettingsRequest = {
+    syncEnabled: true,
+    syncIntervalMs: 21600000,
+    aiEnabled: true,
+    aiModel: ''
+  };
+  adminSaving = false;
+  readonly syncIntervalOptions = [
+    { label: 'Elke 15 min', value: 15 * 60 * 1000 },
+    { label: 'Elke 30 min', value: 30 * 60 * 1000 },
+    { label: 'Elke 1 uur', value: 60 * 60 * 1000 },
+    { label: 'Elke 3 uur', value: 3 * 60 * 60 * 1000 },
+    { label: 'Elke 6 uur', value: 6 * 60 * 60 * 1000 },
+    { label: 'Elke 12 uur', value: 12 * 60 * 60 * 1000 },
+    { label: 'Elke 24 uur', value: 24 * 60 * 60 * 1000 }
+  ];
 
   ruleMatchType = 'MERCHANT';
   ruleMatchMode: 'CONTAINS' | 'EXACT' = 'CONTAINS';
@@ -391,6 +410,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       error: () => this.households = []
     });
 
+    this.loadAdminSettings();
+
     this.loading = false;
   }
 
@@ -458,6 +479,56 @@ export class DashboardComponent implements OnInit, OnDestroy {
         if (this.categories.length === 0) {
           this.categories = [...this.defaultCategories];
         }
+      }
+    });
+  }
+
+  loadAdminSettings() {
+    if (!this.token) {
+      return;
+    }
+    this.api.getAdminSettings(this.token).subscribe({
+      next: (settings) => {
+        this.adminSettings = settings;
+        this.adminSettingsDraft = {
+          syncEnabled: settings.syncEnabled,
+          syncIntervalMs: settings.syncIntervalMs,
+          aiEnabled: settings.aiEnabled,
+          aiModel: settings.aiModel ?? ''
+        };
+      },
+      error: () => {
+        this.adminSettings = null;
+      }
+    });
+  }
+
+  saveAdminSettings() {
+    if (!this.token) {
+      return;
+    }
+    this.adminSaving = true;
+    const payload: AdminSettingsRequest = {
+      syncEnabled: this.adminSettingsDraft.syncEnabled ?? true,
+      syncIntervalMs: Number(this.adminSettingsDraft.syncIntervalMs ?? 21600000),
+      aiEnabled: this.adminSettingsDraft.aiEnabled ?? true,
+      aiModel: (this.adminSettingsDraft.aiModel ?? '').trim() || null
+    };
+    this.api.updateAdminSettings(this.token, payload).subscribe({
+      next: (settings) => {
+        this.adminSettings = settings;
+        this.adminSettingsDraft = {
+          syncEnabled: settings.syncEnabled,
+          syncIntervalMs: settings.syncIntervalMs,
+          aiEnabled: settings.aiEnabled,
+          aiModel: settings.aiModel ?? ''
+        };
+        this.statusMessage = 'Instellingen opgeslagen.';
+        this.adminSaving = false;
+      },
+      error: () => {
+        this.statusMessage = 'Instellingen opslaan mislukt.';
+        this.adminSaving = false;
       }
     });
   }

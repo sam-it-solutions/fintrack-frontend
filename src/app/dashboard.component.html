@@ -26,6 +26,7 @@
           <button class="sidebar-link" [class.active]="activeSection === 'audit'" (click)="setSection('audit')">AI Audit</button>
           <button class="sidebar-link" [class.active]="activeSection === 'household'" (click)="setSection('household')">Household</button>
           <button class="sidebar-link" [class.active]="activeSection === 'connections'" (click)="setSection('connections')">Connections</button>
+          <button class="sidebar-link" [class.active]="activeSection === 'admin'" (click)="setSection('admin')">Instellingen</button>
         </div>
         <div class="sidebar-actions">
           <button class="sidebar-btn" (click)="refresh()">Sync</button>
@@ -58,6 +59,7 @@
               <button class="mobile-action-btn" *ngIf="passkeySupported && !passkeyEnabled" (click)="registerPasskey()" [disabled]="passkeyBusy">
                 {{ passkeyBusy ? 'Face ID...' : 'Face ID' }}
               </button>
+              <span class="mobile-action-chip" *ngIf="passkeySupported && passkeyEnabled">Face ID actief</span>
               <button class="mobile-action-btn ghost" (click)="logout()">Logout</button>
             </div>
           </div>
@@ -68,7 +70,7 @@
           </button>
         </div>
 
-        <section class="filter-shell" [class.filter-shell-collapsed]="filtersCollapsed" [class.filter-shell-open]="!filtersCollapsed">
+        <section class="filter-shell" [class.filter-shell-collapsed]="filtersCollapsed" [class.filter-shell-open]="!filtersCollapsed" style="margin-top: 0px;">
           <div class="filter-sheet-head" *ngIf="!filtersCollapsed">
             <span class="filter-sheet-handle"></span>
             <p class="filter-sheet-title">Filters</p>
@@ -145,7 +147,7 @@
         </section>
         <div class="filter-scrim" *ngIf="!filtersCollapsed" (click)="filtersCollapsed = true"></div>
 
-        <section *ngIf="activeSection === 'overview'" class="space-y-6">
+        <section *ngIf="activeSection === 'overview'" class="space-y-6" style="margin-top: 0px;">
           <div class="grid gap-6 xl:grid-cols-[2fr_1fr]">
             <div class="space-y-6">
               <div class="hero-card">
@@ -432,7 +434,7 @@
           </div>
         </section>
 
-        <section *ngIf="activeSection === 'accounts'" class="space-y-6">
+        <section *ngIf="activeSection === 'accounts'" class="space-y-6" style="margin-top: 0px;">
           <div class="grid gap-6 xl:grid-cols-[2fr_1fr]">
             <div class="space-y-6">
               <div class="card-surface rounded-3xl p-6 shadow-card">
@@ -546,7 +548,7 @@
           </div>
         </section>
 
-        <section *ngIf="activeSection === 'spending'" class="space-y-6">
+        <section *ngIf="activeSection === 'spending'" class="space-y-6" style="margin-top: 0px;">
           <div class="spending-header">
             <div>
               <h2 class="section-title">Spending overzicht</h2>
@@ -794,7 +796,7 @@
           </div>
         </section>
 
-        <section *ngIf="activeSection === 'transactions'" class="space-y-6">
+        <section *ngIf="activeSection === 'transactions'" class="space-y-6" style="margin-top: 0px;">
           <div class="card-surface rounded-3xl p-6 shadow-card">
             <div class="flex flex-wrap items-center justify-between gap-4">
               <div>
@@ -856,7 +858,7 @@
           </div>
         </section>
 
-        <section *ngIf="activeSection === 'audit'" class="space-y-6">
+        <section *ngIf="activeSection === 'audit'" class="space-y-6" style="margin-top: 0px;">
           <div class="grid gap-6 lg:grid-cols-[1.1fr_1.6fr]">
             <div class="space-y-6">
               <div class="card-surface rounded-3xl p-6 shadow-card">
@@ -980,7 +982,7 @@
           </div>
         </section>
 
-        <section *ngIf="activeSection === 'household'" class="space-y-6">
+        <section *ngIf="activeSection === 'household'" class="space-y-6" style="margin-top: 0px;">
           <div class="card-surface rounded-3xl p-6 shadow-card">
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -1203,6 +1205,80 @@
             </div>
           </div>
         </section>
+
+        <section *ngIf="activeSection === 'admin'" class="card-surface rounded-3xl p-6 shadow-card">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 class="section-title">Instellingen</h2>
+              <p class="section-subtitle">Synchronisatie & AI beheer</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button class="pill bg-slate-100 text-slate-600" (click)="loadAdminSettings()">Vernieuwen</button>
+            </div>
+          </div>
+
+          <div class="settings-grid mt-5">
+            <div class="settings-card">
+              <div class="flex items-center justify-between">
+                <h3 class="text-sm font-semibold text-slate-900">Sync</h3>
+                <span class="pill bg-slate-100 text-slate-600">{{ adminSettingsDraft.syncEnabled ? 'Actief' : 'Pauze' }}</span>
+              </div>
+              <div class="settings-row mt-4">
+                <div>
+                  <p class="settings-label">Automatische sync</p>
+                  <p class="text-xs text-slate-500">Laat de jobs automatisch lopen.</p>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" [(ngModel)]="adminSettingsDraft.syncEnabled">
+                  <span></span>
+                </label>
+              </div>
+              <div class="mt-4">
+                <label class="text-xs font-semibold text-slate-500">Interval</label>
+                <select class="filter-input mt-2" [(ngModel)]="adminSettingsDraft.syncIntervalMs">
+                  <option *ngFor="let option of syncIntervalOptions" [ngValue]="option.value">{{ option.label }}</option>
+                </select>
+              </div>
+              <div class="mt-3 text-xs text-slate-500" *ngIf="adminSettings">
+                Laatste waarde: {{ adminSettings.syncIntervalMs | number }} ms
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <div class="flex items-center justify-between">
+                <h3 class="text-sm font-semibold text-slate-900">AI</h3>
+                <span class="pill bg-slate-100 text-slate-600">{{ adminSettingsDraft.aiEnabled ? 'Actief' : 'Uit' }}</span>
+              </div>
+              <div class="settings-row mt-4">
+                <div>
+                  <p class="settings-label">AI herlabelen</p>
+                  <p class="text-xs text-slate-500">Categoriseer transacties automatisch.</p>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" [(ngModel)]="adminSettingsDraft.aiEnabled">
+                  <span></span>
+                </label>
+              </div>
+              <div class="mt-4">
+                <label class="text-xs font-semibold text-slate-500">Model (optioneel)</label>
+                <input class="filter-input mt-2" [(ngModel)]="adminSettingsDraft.aiModel" placeholder="gpt-4.1-mini">
+                <p class="mt-2 text-[11px] text-slate-400">Leeg laten om de standaard te gebruiken.</p>
+              </div>
+              <div class="mt-4 flex flex-wrap gap-2">
+                <button class="pill bg-navy-900 text-white" [disabled]="recategorizing || !adminSettingsDraft.aiEnabled" (click)="recategorizeAll()">
+                  {{ recategorizing ? 'AI bezig…' : 'AI herlabelen' }}
+                </button>
+                <button class="pill bg-slate-100 text-slate-600" (click)="setSection('audit')">Bekijk audit</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-5 flex justify-end">
+            <button class="pill bg-navy-900 text-white" (click)="saveAdminSettings()" [disabled]="adminSaving">
+              {{ adminSaving ? 'Opslaan…' : 'Instellingen opslaan' }}
+            </button>
+          </div>
+        </section>
       </main>
     </div>
   </div>
@@ -1296,6 +1372,14 @@
         <button class="pill bg-slate-100 text-slate-600" (click)="closeMobileMore()">Sluiten</button>
       </div>
       <div class="grid gap-3">
+        <button class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold" (click)="recategorizeAll(); closeMobileMore()" [disabled]="recategorizing">
+          <span>{{ recategorizing ? 'AI bezig…' : 'AI herlabelen' }}</span>
+          <span class="text-xs text-slate-500">Categorieen vernieuwen</span>
+        </button>
+        <button class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold" (click)="setSection('admin'); closeMobileMore()">
+          <span>Instellingen</span>
+          <span class="text-xs text-slate-500">Sync & AI beheer</span>
+        </button>
         <button class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold" (click)="setSection('audit')">
           <span>AI Audit</span>
           <span class="text-xs text-slate-500">Zekerheid & redenen</span>
