@@ -72,12 +72,35 @@ export function serializeAssertionCredential(cred: PublicKeyCredential): any {
   };
 }
 
-function base64UrlToBuffer(base64url?: string): ArrayBuffer {
-  if (!base64url) {
+function base64UrlToBuffer(input?: any): ArrayBuffer {
+  if (!input) {
     throw new Error('Passkey data ontbreekt. Probeer opnieuw.');
   }
-  const padding = '='.repeat((4 - (base64url.length % 4)) % 4);
-  const base64 = (base64url + padding).replace(/-/g, '+').replace(/_/g, '/');
+  if (input instanceof ArrayBuffer) {
+    return input;
+  }
+  if (input instanceof Uint8Array) {
+    return input.buffer;
+  }
+  if (Array.isArray(input)) {
+    return new Uint8Array(input).buffer;
+  }
+  if (typeof input === 'object') {
+    if (Array.isArray(input.data)) {
+      return new Uint8Array(input.data).buffer;
+    }
+    if (typeof input.base64url === 'string') {
+      return base64UrlToBuffer(input.base64url);
+    }
+    if (typeof input.base64 === 'string') {
+      return base64UrlToBuffer(input.base64.replace(/\+/g, '-').replace(/\//g, '_'));
+    }
+  }
+  if (typeof input !== 'string') {
+    throw new Error('Passkey data ontbreekt. Probeer opnieuw.');
+  }
+  const padding = '='.repeat((4 - (input.length % 4)) % 4);
+  const base64 = (input + padding).replace(/-/g, '+').replace(/_/g, '/');
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i += 1) {

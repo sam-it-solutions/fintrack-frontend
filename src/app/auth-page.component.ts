@@ -66,7 +66,11 @@ export class AuthPageComponent {
       this.session.setToken(result.token);
       this.statusMessage = 'Welkom terug!';
     } catch (err: any) {
-      this.statusMessage = err?.error?.message ?? err?.message ?? 'Face ID login mislukt.';
+      if (err?.status === 401 || err?.status === 403) {
+        this.statusMessage = 'Face ID login mislukt. Log in met e-mail om het opnieuw te proberen.';
+      } else {
+        this.statusMessage = err?.error?.message ?? err?.message ?? 'Face ID login mislukt.';
+      }
     } finally {
       this.passkeyBusy = false;
     }

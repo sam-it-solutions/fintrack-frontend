@@ -90,6 +90,12 @@
   border-color: transparent;
 }
 
+.mobile-action-btn.ghost {
+  background: rgba(15, 23, 42, 0.08);
+  color: #475569;
+  border-color: transparent;
+}
+
 .app-bg {
   position: fixed;
   inset: 0;
@@ -1288,7 +1294,7 @@
 }
 
 .ios-nav {
-  padding: 12px 16px 20px;
+  padding: 12px 16px calc(20px + env(safe-area-inset-bottom));
 }
 
 .ios-bar {
@@ -1333,6 +1339,10 @@
   justify-self: center;
 }
 
+.mobile-more-sheet {
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
+}
+
 @media (max-width: 1024px) {
   .sidebar {
     display: none;
@@ -1366,7 +1376,7 @@
   .mobile-header {
     display: flex;
     position: sticky;
-    top: 10px;
+    top: calc(10px + env(safe-area-inset-top));
     z-index: 30;
   }
 
@@ -1375,12 +1385,16 @@
   }
 
   .filter-shell {
-    padding: 10px 12px;
-    border-radius: 22px;
-    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
-    position: sticky;
-    top: 72px;
-    z-index: 25;
+    padding: 8px 10px;
+    border-radius: 18px;
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.18);
+    position: fixed;
+    top: calc(66px + env(safe-area-inset-top));
+    left: 12px;
+    right: 12px;
+    z-index: 45;
+    max-height: calc(100vh - 200px);
+    overflow: auto;
   }
 
   .filter-shell.filter-shell-collapsed {
@@ -1388,28 +1402,9 @@
   }
 
   .filter-shell .section-subtitle,
-  .filter-shell .filter-eyebrow {
+  .filter-shell .filter-eyebrow,
+  .filter-header {
     display: none;
-  }
-
-  .filter-header {
-    gap: 6px;
-  }
-
-  .filter-toggle {
-    padding: 6px 10px;
-    font-size: 11px;
-  }
-
-  .filter-header {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .filter-toggle {
-    white-space: nowrap;
-    width: 100%;
-    justify-content: center;
   }
 
   .filter-head {
@@ -1418,7 +1413,7 @@
 
   .filter-controls {
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: 8px;
   }
 
   .goal-grid {
@@ -1446,14 +1441,14 @@
   }
 
   .filter-segments {
-    margin-top: 12px;
+    margin-top: 8px;
   }
 
   .segment-group {
     background: #f8fafc;
     border: 1px solid rgba(148, 163, 184, 0.2);
-    border-radius: 16px;
-    padding: 10px;
+    border-radius: 14px;
+    padding: 8px;
   }
 
   .segment-row {
@@ -1566,6 +1561,9 @@
   .filter-shell {
     padding: 8px 10px;
     top: 64px;
+    left: 12px;
+    right: 12px;
+    max-height: calc(100vh - 200px);
   }
 
   .sidebar-card {
