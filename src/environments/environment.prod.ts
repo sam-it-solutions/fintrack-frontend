@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiBaseUrl: 'https://api.fintrack.sam-it-solutions.be'
+  apiBaseUrl: 'https://fintrack-backend-676e.onrender.com'
 };

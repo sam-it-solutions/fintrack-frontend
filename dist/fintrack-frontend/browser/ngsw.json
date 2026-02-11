@@ -1,0 +1,86 @@
+{
+  "configVersion": 1,
+  "timestamp": 1770823563145,
+  "index": "/index.html",
+  "assetGroups": [
+    {
+      "name": "app",
+      "installMode": "prefetch",
+      "updateMode": "prefetch",
+      "cacheQueryOptions": {
+        "ignoreVary": true
+      },
+      "urls": [
+        "/index.html",
+        "/main-6ZYGJO4Q.js",
+        "/polyfills-FFHMD2TL.js",
+        "/styles-CSPFDMP6.css"
+      ],
+      "patterns": []
+    },
+    {
+      "name": "assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "cacheQueryOptions": {
+        "ignoreVary": true
+      },
+      "urls": [
+        "/assets/icons/apple-touch-icon.png",
+        "/assets/icons/apple-touch-icon.svg",
+        "/assets/icons/fintrack-icon.svg",
+        "/assets/icons/icon-192.png",
+        "/assets/icons/icon-512.png",
+        "/manifest.webmanifest"
+      ],
+      "patterns": []
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "api",
+      "patterns": [
+        "\\/api\\/.*"
+      ],
+      "strategy": "performance",
+      "maxSize": 50,
+      "maxAge": 3600000,
+      "timeoutMs": 5000,
+      "cacheQueryOptions": {
+        "ignoreVary": true
+      },
+      "version": 1
+    }
+  ],
+  "hashTable": {
+    "/assets/icons/apple-touch-icon.png": "538dcb83318e8d132bc80ca139f6be09edbd73ca",
+    "/assets/icons/apple-touch-icon.svg": "0e3be71827756c5fdb6887e8634983750a48fa2e",
+    "/assets/icons/fintrack-icon.svg": "c9b20d59ee1954eab37c0e2374f3343cb7ed5d43",
+    "/assets/icons/icon-192.png": "da86e2bc84a26145fa8e9f1097a2b91cae564f3b",
+    "/assets/icons/icon-512.png": "2cfc27ec9b61740b773620ee08ea0f64b4012a56",
+    "/index.html": "1f1dea57bc4fa1ab2cc15c24ac3577c7d56a2e0c",
+    "/main-6ZYGJO4Q.js": "14d61dbea77f8def0aa391c86b7f3a55405b6d38",
+    "/manifest.webmanifest": "3f2aeed9f1d6dda39b563a43bc64224f8d197a46",
+    "/polyfills-FFHMD2TL.js": "f49b49a155bc7d192db62a4c15d0a612b460a667",
+    "/styles-CSPFDMP6.css": "cf1a65b625452240c09454d17b718d8fbd848f2d"
+  },
+  "navigationUrls": [
+    {
+      "positive": true,
+      "regex": "^\\/.*$"
+    },
+    {
+      "positive": false,
+      "regex": "^\\/(?:.+\\/)?[^/]*\\.[^/]*$"
+    },
+    {
+      "positive": false,
+      "regex": "^\\/(?:.+\\/)?[^/]*__[^/]*$"
+    },
+    {
+      "positive": false,
+      "regex": "^\\/(?:.+\\/)?[^/]*__[^/]*\\/.*$"
+    }
+  ],
+  "navigationRequestStrategy": "performance"
+}
