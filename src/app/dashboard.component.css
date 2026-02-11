@@ -1378,6 +1378,13 @@
     padding: 10px 12px;
     border-radius: 22px;
     box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+    position: sticky;
+    top: 72px;
+    z-index: 25;
+  }
+
+  .filter-shell.filter-shell-collapsed {
+    display: none;
   }
 
   .filter-shell .section-subtitle,
@@ -1558,6 +1565,7 @@
 
   .filter-shell {
     padding: 8px 10px;
+    top: 64px;
   }
 
   .sidebar-card {

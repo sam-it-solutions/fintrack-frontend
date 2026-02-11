@@ -5,6 +5,10 @@ export function isPasskeySupported(): boolean {
 }
 
 export function toPublicKeyCreationOptions(options: any): PublicKeyCredentialCreationOptions {
+  if (!options?.challenge || !options?.user?.id) {
+    throw new Error('Passkey data ontbreekt. Probeer opnieuw.');
+  }
+  const exclude = (options.excludeCredentials || []).filter((cred: any) => !!cred?.id);
   return {
     ...options,
     challenge: base64UrlToBuffer(options.challenge),
@@ -12,7 +16,7 @@ export function toPublicKeyCreationOptions(options: any): PublicKeyCredentialCre
       ...options.user,
       id: base64UrlToBuffer(options.user.id)
     },
-    excludeCredentials: (options.excludeCredentials || []).map((cred: any) => ({
+    excludeCredentials: exclude.map((cred: any) => ({
       ...cred,
       id: base64UrlToBuffer(cred.id)
     }))
@@ -20,10 +24,14 @@ export function toPublicKeyCreationOptions(options: any): PublicKeyCredentialCre
 }
 
 export function toPublicKeyRequestOptions(options: any): PublicKeyCredentialRequestOptions {
+  if (!options?.challenge) {
+    throw new Error('Passkey data ontbreekt. Probeer opnieuw.');
+  }
+  const allow = (options.allowCredentials || []).filter((cred: any) => !!cred?.id);
   return {
     ...options,
     challenge: base64UrlToBuffer(options.challenge),
-    allowCredentials: (options.allowCredentials || []).map((cred: any) => ({
+    allowCredentials: allow.map((cred: any) => ({
       ...cred,
       id: base64UrlToBuffer(cred.id)
     }))
@@ -60,7 +68,10 @@ export function serializeAssertionCredential(cred: PublicKeyCredential): any {
   };
 }
 
-function base64UrlToBuffer(base64url: string): ArrayBuffer {
+function base64UrlToBuffer(base64url?: string): ArrayBuffer {
+  if (!base64url) {
+    throw new Error('Passkey data ontbreekt. Probeer opnieuw.');
+  }
   const padding = '='.repeat((4 - (base64url.length % 4)) % 4);
   const base64 = (base64url + padding).replace(/-/g, '+').replace(/_/g, '/');
   const binary = atob(base64);
