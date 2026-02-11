@@ -1375,9 +1375,23 @@
   }
 
   .filter-shell {
-    padding: 12px;
+    padding: 10px 12px;
     border-radius: 22px;
     box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+  }
+
+  .filter-shell .section-subtitle,
+  .filter-shell .filter-eyebrow {
+    display: none;
+  }
+
+  .filter-header {
+    gap: 6px;
+  }
+
+  .filter-toggle {
+    padding: 6px 10px;
+    font-size: 11px;
   }
 
   .filter-header {
@@ -1543,7 +1557,7 @@
   }
 
   .filter-shell {
-    padding: 14px;
+    padding: 8px 10px;
   }
 
   .sidebar-card {
