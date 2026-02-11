@@ -1,0 +1,1282 @@
+<div class="app-shell">
+  <div class="app-bg"></div>
+
+  <div class="app-container mx-auto w-full max-w-[1440px] px-4 pb-28 pt-8 sm:px-6 lg:px-8 2xl:max-w-[1600px]">
+    <div class="layout-grid grid gap-5 lg:grid-cols-[220px_1fr] xl:grid-cols-[240px_1fr]">
+      <aside class="sidebar hidden lg:flex">
+        <div class="sidebar-brand">
+          <div class="logo-mark small">FT</div>
+          <div>
+            <p class="sidebar-eyebrow">Workspace</p>
+            <p class="sidebar-title">Fintrack</p>
+          </div>
+        </div>
+        <div class="sidebar-nav">
+          <button class="sidebar-link" [class.active]="activeSection === 'overview'" (click)="setSection('overview')">Overview</button>
+          <button class="sidebar-link" [class.active]="activeSection === 'accounts'" (click)="setSection('accounts')">Accounts</button>
+          <button class="sidebar-link" [class.active]="activeSection === 'spending'" (click)="setSection('spending')">Spending</button>
+          <button class="sidebar-link" [class.active]="activeSection === 'transactions'" (click)="setSection('transactions')">Transactions</button>
+          <button class="sidebar-link" [class.active]="activeSection === 'audit'" (click)="setSection('audit')">AI Audit</button>
+          <button class="sidebar-link" [class.active]="activeSection === 'household'" (click)="setSection('household')">Household</button>
+          <button class="sidebar-link" [class.active]="activeSection === 'connections'" (click)="setSection('connections')">Connections</button>
+        </div>
+        <div class="sidebar-actions">
+          <button class="sidebar-btn" (click)="refresh()">Sync</button>
+          <button class="sidebar-btn accent" (click)="recategorizeAll()" [disabled]="recategorizing">
+            {{ recategorizing ? 'AI bezig…' : 'AI herlabelen' }}
+          </button>
+          <button class="sidebar-btn" *ngIf="passkeySupported" (click)="registerPasskey()" [disabled]="passkeyBusy">
+            {{ passkeyBusy ? 'Face ID...' : 'Face ID activeren' }}
+          </button>
+          <button class="sidebar-btn ghost" (click)="logout()">Logout</button>
+        </div>
+        <div class="sidebar-card">
+          <p class="sidebar-card-title">Focus month</p>
+          <p class="sidebar-card-text">Filters bepalen je cashflow en transacties.</p>
+        </div>
+      </aside>
+
+      <main class="main-column space-y-6">
+        <div class="mobile-header lg:hidden">
+          <div class="mobile-brand">
+            <div class="logo-mark small">FT</div>
+            <div>
+              <p class="mobile-title">Fintrack</p>
+              <p class="mobile-subtitle">Bank & crypto overzicht</p>
+            </div>
+          </div>
+          <div class="mobile-actions">
+            <button class="mobile-action-btn" (click)="refresh()">Sync</button>
+            <button class="mobile-action-btn" *ngIf="passkeySupported" (click)="registerPasskey()" [disabled]="passkeyBusy">
+              {{ passkeyBusy ? 'Face ID...' : 'Face ID' }}
+            </button>
+            <button class="mobile-action-btn accent" (click)="filtersCollapsed = !filtersCollapsed">
+              {{ filtersCollapsed ? 'Toon filters' : 'Verberg filters' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="status-banner" *ngIf="statusMessage">
+          {{ statusMessage }}
+        </div>
+
+        <section class="filter-shell">
+          <div class="filter-header">
+            <div>
+              <p class="filter-eyebrow">Focus</p>
+              <h3 class="section-title">Filter hub</h3>
+              <p class="section-subtitle">Snelle filters voor maand, rekeningen en categorieen.</p>
+            </div>
+            <button type="button" class="filter-toggle" (click)="filtersCollapsed = !filtersCollapsed">
+              {{ filtersCollapsed ? 'Toon filters' : 'Verberg filters' }}
+            </button>
+          </div>
+
+          <div class="filter-grid" [class.is-collapsed]="filtersCollapsed">
+            <div class="filter-head">
+              <div>
+                <p class="filter-eyebrow">Maand & zoeken</p>
+                <p class="filter-card-title">Snelle input</p>
+              </div>
+            </div>
+            <div class="filter-controls">
+              <div class="filter-field">
+                <label class="filter-label">Maand</label>
+                <div class="filter-pill">
+                  <input type="month" [(ngModel)]="month" (change)="loadAll()">
+                </div>
+              </div>
+              <div class="filter-field">
+                <label class="filter-label">Zoek</label>
+                <input class="filter-input" placeholder="Zoek transactie" [(ngModel)]="transactionQuery">
+              </div>
+              <div class="filter-field">
+                <label class="filter-label">Categorie</label>
+                <select class="filter-input" [(ngModel)]="transactionCategoryFilter">
+                  <option value="ALL">Alle categorieen</option>
+                  <option *ngFor="let cat of categoriesAvailable" [value]="cat">{{ cat }}</option>
+                </select>
+              </div>
+              <div class="filter-field">
+                <label class="filter-label">Accounts</label>
+                <button class="filter-reset" (click)="clearAccountFilter()">Alle rekeningen</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 filter-segments" *ngIf="filterableBankAccounts.length > 0 && !filtersCollapsed">
+            <div class="segment-group">
+              <p class="segment-label">Rekeningen</p>
+              <div class="segment-row">
+                <button class="chip" [class.chip-active]="selectedAccountIds.length === 0" (click)="clearAccountFilter()">Alles</button>
+                <button class="chip" *ngFor="let a of filterableBankAccounts" [class.chip-active]="selectedAccountIds.includes(a.id)" (click)="toggleAccountFilter(a.id)">
+                  {{ accountDisplayName(a) }}
+                </button>
+              </div>
+            </div>
+            <div class="segment-group">
+              <p class="segment-label">Type</p>
+              <div class="segment-row">
+                <button class="chip" [class.chip-active]="directionFilter === 'ALL'" (click)="setDirectionFilter('ALL')">Alle types</button>
+                <button class="chip chip-green" [class.chip-active]="directionFilter === 'IN'" (click)="setDirectionFilter('IN')">Inkomen</button>
+                <button class="chip chip-red" [class.chip-active]="directionFilter === 'OUT'" (click)="setDirectionFilter('OUT')">Uitgaven</button>
+              </div>
+            </div>
+          </div>
+          <div class="mt-2 text-xs text-slate-500" *ngIf="filterableBankAccounts.length === 0 && !filtersCollapsed">
+            Voeg eerst een bankrekening toe om te filteren.
+          </div>
+        </section>
+
+        <section *ngIf="activeSection === 'overview'" class="space-y-6">
+          <div class="grid gap-6 xl:grid-cols-[2fr_1fr]">
+            <div class="space-y-6">
+              <div class="hero-card">
+                <div class="hero-head">
+                  <div>
+                    <p class="text-xs uppercase tracking-[0.3em] text-slate-200">Net worth</p>
+                    <div class="mt-3 text-4xl font-semibold text-white">{{ netWorthEur | number:'1.2-2' }} EUR</div>
+                    <p class="mt-2 text-sm text-slate-300">Bank (EUR) + crypto (EUR)</p>
+                  </div>
+                  <div class="hero-delta" [class.up]="netWorthTrendDelta >= 0" [class.down]="netWorthTrendDelta < 0">
+                    <span class="delta-arrow">{{ netWorthTrendDelta >= 0 ? '▲' : '▼' }}</span>
+                    <span>{{ netWorthTrendDelta | number:'1.2-2' }} EUR</span>
+                    <span class="delta-pct">{{ netWorthTrendDeltaPct | number:'1.1-1' }}%</span>
+                    <span class="delta-label">30d</span>
+                  </div>
+                </div>
+                <div class="hero-sparkline">
+                  <svg viewBox="0 0 240 80" class="h-20 w-full" aria-hidden="true">
+                    <defs>
+                      <linearGradient id="heroFill" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stop-color="#d7b15a" stop-opacity="0.5"/>
+                        <stop offset="100%" stop-color="#d7b15a" stop-opacity="0"/>
+                      </linearGradient>
+                    </defs>
+                    <g class="hero-grid">
+                      <line x1="0" y1="14" x2="240" y2="14"></line>
+                      <line x1="0" y1="40" x2="240" y2="40"></line>
+                      <line x1="0" y1="66" x2="240" y2="66"></line>
+                    </g>
+                    <polygon [attr.points]="netSparklineAreaPoints" fill="url(#heroFill)"></polygon>
+                    <polyline [attr.points]="netSparklinePoints" class="hero-line"></polyline>
+                    <circle *ngIf="netSparklineLastPoint" [attr.cx]="netSparklineLastPoint?.x" [attr.cy]="netSparklineLastPoint?.y" r="3.5" class="hero-point"></circle>
+                  </svg>
+                </div>
+                <div class="hero-share">
+                  <div class="hero-share-labels">
+                    <span>Bank {{ bankSharePct | number:'1.0-0' }}%</span>
+                    <span>Crypto {{ cryptoSharePct | number:'1.0-0' }}%</span>
+                  </div>
+                  <div class="hero-share-bar">
+                    <span class="bank" [style.width.%]="bankSharePct"></span>
+                    <span class="crypto" [style.width.%]="cryptoSharePct"></span>
+                  </div>
+                </div>
+                <div class="hero-metrics">
+                  <div>
+                    <p class="text-xs text-slate-300">Bank totaal</p>
+                    <p class="text-lg font-semibold text-white">{{ bankTotalEur | number:'1.2-2' }} EUR</p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-slate-300">Crypto waarde</p>
+                    <p class="text-lg font-semibold text-white">{{ cryptoFiatTotal | number:'1.2-2' }} EUR</p>
+                  </div>
+                  <div>
+                    <p class="text-xs text-slate-300">Cashflow maand</p>
+                    <p class="text-lg font-semibold text-white">{{ netMonth | number:'1.2-2' }} EUR</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid gap-4 sm:grid-cols-3">
+                <button type="button" class="metric-card metric-action" (click)="openSpendingOverview('IN')">
+                  <p class="text-xs text-slate-500">Inkomen</p>
+                  <p class="mt-2 text-2xl font-semibold text-emerald-600">{{ totalIncomeMonth | number:'1.2-2' }}</p>
+                  <p class="text-xs text-slate-400">{{ primaryCurrency }}</p>
+                </button>
+                <button type="button" class="metric-card metric-action" (click)="openSpendingOverview('OUT')">
+                  <p class="text-xs text-slate-500">Uitgaven</p>
+                  <p class="mt-2 text-2xl font-semibold text-rose-600">{{ totalExpenseMonth | number:'1.2-2' }}</p>
+                  <p class="text-xs text-slate-400">{{ primaryCurrency }}</p>
+                </button>
+                <div class="metric-card">
+                  <p class="text-xs text-slate-500">Gem. dag</p>
+                  <p class="mt-2 text-2xl font-semibold text-slate-900">{{ averageDailySpend | number:'1.2-2' }}</p>
+                  <p class="text-xs text-slate-400">EUR / dag</p>
+                </div>
+              </div>
+
+              <div class="grid gap-4 lg:grid-cols-[1.2fr_1fr] overview-mini-panels">
+                <div class="space-y-4">
+                  <div class="card-surface rounded-3xl p-6 shadow-card trend-card">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <h2 class="section-title">Net worth trend</h2>
+                        <p class="section-subtitle">Indicatief · laatste 30 dagen</p>
+                      </div>
+                      <span class="pill bg-slate-100 text-slate-600">30d</span>
+                    </div>
+                    <div class="mt-4 trend-chart">
+                      <svg viewBox="0 0 240 80" class="w-full trend-svg" aria-hidden="true">
+                        <defs>
+                          <linearGradient id="netWorthFill" x1="0" x2="0" y1="0" y2="1">
+                            <stop offset="0%" stop-color="#d7b15a" stop-opacity="0.45"/>
+                            <stop offset="100%" stop-color="#d7b15a" stop-opacity="0"/>
+                          </linearGradient>
+                        </defs>
+                        <g class="trend-grid">
+                          <line x1="0" y1="12" x2="240" y2="12"></line>
+                          <line x1="0" y1="40" x2="240" y2="40"></line>
+                          <line x1="0" y1="68" x2="240" y2="68"></line>
+                        </g>
+                        <polygon [attr.points]="netWorthTrendAreaPoints" class="trend-area" fill="url(#netWorthFill)"></polygon>
+                        <polyline [attr.points]="netWorthTrendPoints" class="trend-line"></polyline>
+                      </svg>
+                    </div>
+                    <div class="trend-scale">
+                      <span>Min {{ netWorthMin | number:'1.2-2' }} EUR</span>
+                      <span>Max {{ netWorthMax | number:'1.2-2' }} EUR</span>
+                    </div>
+                    <div class="trend-metrics">
+                      <div>
+                        <p class="text-xs text-slate-500">Verandering</p>
+                        <p class="text-sm font-semibold" [class.text-emerald-600]="netWorthTrendDelta >= 0" [class.text-rose-600]="netWorthTrendDelta < 0">
+                          {{ netWorthTrendDelta | number:'1.2-2' }} EUR
+                        </p>
+                      </div>
+                      <div>
+                        <p class="text-xs text-slate-500">Huidig</p>
+                        <p class="text-sm font-semibold text-slate-900">{{ netWorthEur | number:'1.2-2' }} EUR</p>
+                      </div>
+                      <div>
+                        <p class="text-xs text-slate-500">Change</p>
+                        <p class="text-sm font-semibold text-slate-900">{{ netWorthTrendDeltaPct | number:'1.1-1' }}%</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="card-surface rounded-3xl p-6 shadow-card">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <h2 class="section-title">Uitgaven trend</h2>
+                        <p class="section-subtitle">Laatste 14 dagen</p>
+                      </div>
+                      <span class="pill bg-slate-100 text-slate-600">Live</span>
+                    </div>
+                    <div class="mt-4 trend-chart trend-chart-alt">
+                      <svg viewBox="0 0 240 90" class="w-full trend-svg" aria-hidden="true">
+                        <defs>
+                          <linearGradient id="expenseFill" x1="0" x2="0" y1="0" y2="1">
+                            <stop offset="0%" stop-color="#f87171" stop-opacity="0.35"/>
+                            <stop offset="100%" stop-color="#f87171" stop-opacity="0"/>
+                          </linearGradient>
+                        </defs>
+                        <g class="trend-grid">
+                          <line x1="0" y1="12" x2="240" y2="12"></line>
+                          <line x1="0" y1="45" x2="240" y2="45"></line>
+                          <line x1="0" y1="78" x2="240" y2="78"></line>
+                        </g>
+                        <polygon [attr.points]="expenseSparklineAreaPoints" class="trend-area expense" fill="url(#expenseFill)"></polygon>
+                        <polyline [attr.points]="expenseSparklinePoints" class="trend-line expense"></polyline>
+                        <polyline [attr.points]="incomeSparklinePoints" class="trend-line income"></polyline>
+                      </svg>
+                    </div>
+                    <div class="trend-legend">
+                      <span class="legend-dot expense">Uitgaven</span>
+                      <span class="legend-dot income">Inkomsten</span>
+                    </div>
+                    <div class="trend-scale">
+                      <span>Tot {{ expenseTotal14 | number:'1.0-0' }} EUR · Max dag {{ expenseMax14 | number:'1.0-0' }} EUR</span>
+                      <span>Gem. {{ expenseAvg14 | number:'1.0-0' }} EUR/dag</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="space-y-4">
+                  <div class="card-surface rounded-3xl p-6 shadow-card">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <h2 class="section-title">Crypto snapshot</h2>
+                        <p class="section-subtitle">Top assets</p>
+                      </div>
+                      <span class="pill bg-slate-100 text-slate-600">{{ cryptoAccounts.length }}</span>
+                    </div>
+                    <div class="mt-4 space-y-3" *ngIf="cryptoSnapshotAssets.length > 0; else noCryptoSnapshot">
+                      <button type="button" class="crypto-row" *ngFor="let asset of cryptoSnapshotAssets" (click)="openCryptoDetails(asset)">
+                        <div class="crypto-row-main">
+                          <img class="crypto-icon" [src]="cryptoIconUrl(asset.currency)" [alt]="asset.currency" (error)="onCoinIconError($event, asset.currency)">
+                          <div>
+                            <p class="text-sm font-semibold text-slate-900">{{ asset.name }}</p>
+                            <p class="text-xs text-slate-500">{{ asset.currency }}</p>
+                            <div class="crypto-bar">
+                              <span class="crypto-bar-fill" [style.width.%]="cryptoFiatTotal ? ((asset.currentFiatValue ?? 0) / cryptoFiatTotal) * 100 : 0"></span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="crypto-row-value">
+                          <div class="crypto-value-line">
+                            <span class="crypto-value">{{ asset.currentFiatValue | number:'1.2-2' }}</span>
+                            <span class="crypto-currency">EUR</span>
+                          </div>
+                          <div class="crypto-holdings">{{ asset.currentBalance | number:'1.4-4' }} {{ asset.currency }}</div>
+                        </div>
+                      </button>
+                    </div>
+                    <ng-template #noCryptoSnapshot>
+                      <p class="text-sm text-slate-500">Nog geen crypto assets.</p>
+                    </ng-template>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card-surface rounded-3xl p-6 shadow-card">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h2 class="section-title">Top categorieen</h2>
+                    <p class="section-subtitle">Gebaseerd op {{ primaryCurrency }}</p>
+                  </div>
+                  <span class="pill bg-amber-50 text-amber-700">AI match</span>
+                </div>
+                <div class="mt-4 space-y-3">
+                  <button type="button" class="category-action flex w-full items-center justify-between text-left text-sm" *ngFor="let item of topSpendingItems" (click)="applyCategoryFilter(item.category)">
+                    <div>
+                      <p class="font-semibold text-slate-900">{{ item.category }}</p>
+                      <p class="text-xs text-slate-500">{{ item.currency }}</p>
+                    </div>
+                    <div class="text-right">
+                      <p class="font-semibold text-slate-900">{{ item.total | number:'1.2-2' }}</p>
+                      <p class="text-xs text-slate-400">{{ primaryCurrency }}</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-6">
+              <div class="card-surface rounded-3xl p-6 shadow-card">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h2 class="section-title">Recente transacties</h2>
+                    <p class="section-subtitle">Laatste bewegingen</p>
+                  </div>
+                  <button class="pill bg-slate-100 text-slate-600" (click)="setSection('transactions')">Bekijk alles</button>
+                </div>
+                <div class="mt-4 space-y-3">
+                  <div class="transaction-row" *ngFor="let tx of recentTransactions">
+                    <div>
+                      <p class="text-sm font-semibold text-slate-900">{{ tx.merchantName || tx.description }}</p>
+                      <p class="text-xs text-slate-500">{{ accountLabel(tx.accountId) }}</p>
+                      <div class="tx-meta">
+                        <span class="category-pill">{{ tx.category || 'Overig' }}</span>
+                        <span class="text-[11px] text-slate-400" *ngIf="tx.counterpartyIban">IBAN {{ tx.counterpartyIban }}</span>
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <p class="text-sm font-semibold" [class.text-emerald-600]="tx.direction === 'IN'" [class.text-rose-600]="tx.direction === 'OUT'">
+                        {{ tx.direction === 'OUT' ? '-' : '+' }}{{ tx.amount | number:'1.2-2' }} {{ tx.currency }}
+                      </p>
+                      <p class="text-xs text-slate-400">{{ tx.bookingDate || tx.valueDate }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card-surface rounded-3xl p-6 shadow-card">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h2 class="section-title">Top merchants</h2>
+                    <p class="section-subtitle">Hoogste uitgaven</p>
+                  </div>
+                  <span class="pill bg-slate-100 text-slate-600">{{ topMerchants.length }}</span>
+                </div>
+                <div class="mt-4 space-y-3">
+                  <div class="flex items-center justify-between text-sm" *ngFor="let merchant of topMerchants">
+                    <div>
+                      <p class="font-semibold text-slate-900">{{ merchant.name }}</p>
+                      <p class="text-xs text-slate-500">{{ merchant.count }} transacties</p>
+                    </div>
+                    <div class="text-right">
+                      <p class="font-semibold text-slate-900">{{ merchant.total | number:'1.2-2' }} EUR</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card-surface rounded-3xl p-6 shadow-card">
+                <h2 class="section-title">Highlights</h2>
+                <div class="mt-4 space-y-3 text-sm text-slate-600">
+                  <p>Grootste uitgave: <strong class="text-slate-900">{{ largestExpense?.description || 'N.v.t.' }}</strong></p>
+                  <p>Laatste sync: <strong class="text-slate-900">{{ summary?.updatedAt || 'Onbekend' }}</strong></p>
+                  <p>Actieve connecties: <strong class="text-slate-900">{{ connections.length }}</strong></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section *ngIf="activeSection === 'accounts'" class="space-y-6">
+          <div class="grid gap-6 xl:grid-cols-[2fr_1fr]">
+            <div class="space-y-6">
+              <div class="card-surface rounded-3xl p-6 shadow-card">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h2 class="section-title">Bank accounts</h2>
+                    <p class="section-subtitle">Inclusief handmatige rekeningen</p>
+                  </div>
+                  <span class="pill bg-slate-100 text-slate-600">{{ bankAccounts.length }} accounts</span>
+                </div>
+                <div class="mt-4 space-y-3">
+                  <div class="account-card" *ngFor="let a of bankAccounts">
+                    <div>
+                      <p class="text-sm font-semibold text-slate-900">{{ accountDisplayName(a) }}</p>
+                      <p class="text-xs text-slate-500">{{ a.provider }} · {{ a.currency }}</p>
+                      <p class="text-xs text-slate-400" *ngIf="a.iban">IBAN {{ a.iban }}</p>
+                    </div>
+                    <div class="text-right">
+                      <p class="text-sm font-semibold text-slate-900">{{ a.currentBalance | number:'1.2-2' }} {{ a.currency }}</p>
+                      <p class="text-xs text-slate-400" *ngIf="a.lastSyncedAt">{{ a.lastSyncedAt | date:'short' }}</p>
+                    </div>
+                    <div class="account-actions">
+                      <button class="pill bg-slate-100 text-slate-600" *ngIf="editingAccountId !== a.id" (click)="startEditLabel(a)">Naam aanpassen</button>
+                      <button class="pill bg-rose-50 text-rose-600" *ngIf="isManualAccount(a)" (click)="deleteManualAccount(a)">Verwijder</button>
+                      <button class="pill bg-slate-100 text-slate-600" *ngIf="!isManualAccount(a)" (click)="shareAccount(a)">Deel met household</button>
+                    </div>
+                    <div class="account-edit" *ngIf="editingAccountId === a.id">
+                      <input class="filter-input" [(ngModel)]="labelDrafts[a.id]" placeholder="Accountnaam">
+                      <div class="mt-2 flex gap-2">
+                        <button class="pill bg-navy-900 text-white" (click)="saveAccountLabel(a)">Opslaan</button>
+                        <button class="pill bg-slate-100 text-slate-600" (click)="cancelEditLabel()">Annuleer</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card-surface rounded-3xl p-6 shadow-card">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h2 class="section-title">Crypto wallets</h2>
+                    <p class="section-subtitle">Samengevoegd per wallet</p>
+                  </div>
+                  <span class="pill bg-slate-100 text-slate-600">{{ cryptoWallets.length }} wallets</span>
+                </div>
+                <div class="mt-4 space-y-4">
+                  <div class="crypto-wallet" *ngFor="let wallet of cryptoWallets">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <p class="text-sm font-semibold text-slate-900">{{ wallet.name }}</p>
+                        <p class="text-xs text-slate-500">{{ wallet.provider }}</p>
+                      </div>
+                      <div class="text-right">
+                        <p class="text-sm font-semibold text-slate-900">{{ wallet.totalFiatValue | number:'1.2-2' }} EUR</p>
+                        <p class="text-xs text-slate-400">{{ wallet.assets.length }} assets</p>
+                      </div>
+                    </div>
+                    <div class="mt-3 grid gap-2 sm:grid-cols-2">
+                      <button type="button" class="crypto-asset" *ngFor="let asset of wallet.assets" [class.active]="selectedCryptoAssetId === asset.id" (click)="openCryptoDetails(asset)">
+                        <div class="crypto-asset-main">
+                          <img class="crypto-icon small" [src]="cryptoIconUrl(asset.currency)" [alt]="asset.currency" (error)="onCoinIconError($event, asset.currency)">
+                          <div>
+                            <p class="text-xs font-semibold text-slate-900">{{ asset.name }}</p>
+                            <p class="text-[10px] text-slate-500">{{ asset.currency }}</p>
+                          </div>
+                        </div>
+                        <div class="text-right">
+                          <p class="text-xs font-semibold text-slate-900">{{ asset.currentBalance | number:'1.4-4' }}</p>
+                          <p class="text-[10px] text-slate-500">≈ {{ asset.currentFiatValue | number:'1.2-2' }} EUR</p>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-6">
+              <div class="card-surface rounded-3xl p-6 shadow-card">
+                <h2 class="section-title">Handmatige rekening</h2>
+                <p class="section-subtitle">Voeg spaarrekeningen of offline assets toe.</p>
+                <div class="mt-4 space-y-3">
+                  <input class="filter-input" [(ngModel)]="manualAccountName" placeholder="Naam rekening">
+                  <input class="filter-input" [(ngModel)]="manualAccountIban" placeholder="IBAN">
+                  <div class="grid gap-2 sm:grid-cols-2">
+                    <input class="filter-input" [(ngModel)]="manualAccountCurrency" placeholder="Valuta">
+                    <input class="filter-input" [(ngModel)]="manualAccountOpeningBalance" placeholder="Startsaldo">
+                  </div>
+                  <button class="pill bg-navy-900 text-white" (click)="createManualAccount()">Rekening toevoegen</button>
+                </div>
+              </div>
+
+              <div class="card-surface rounded-3xl p-6 shadow-card">
+                <h2 class="section-title">Net worth breakdown</h2>
+                <div class="mt-4 space-y-3 text-sm">
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-500">Bank</span>
+                    <span class="font-semibold text-slate-900">{{ bankTotalEur | number:'1.2-2' }} EUR</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-slate-500">Crypto</span>
+                    <span class="font-semibold text-slate-900">{{ cryptoFiatTotal | number:'1.2-2' }} EUR</span>
+                  </div>
+                  <div class="flex items-center justify-between border-t border-slate-200 pt-3">
+                    <span class="text-slate-500">Total</span>
+                    <span class="font-semibold text-slate-900">{{ netWorthEur | number:'1.2-2' }} EUR</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section *ngIf="activeSection === 'spending'" class="space-y-6">
+          <div class="spending-header">
+            <div>
+              <h2 class="section-title">Spending overzicht</h2>
+              <p class="section-subtitle">Bekijk uitgaven en inkomsten per categorie.</p>
+            </div>
+            <div class="pill-group">
+              <button type="button" class="pill bg-slate-100 text-slate-600" [class.pill-active]="spendingDirection === 'OUT'" (click)="setSpendingDirection('OUT')">Uitgaven</button>
+              <button type="button" class="pill bg-slate-100 text-slate-600" [class.pill-active]="spendingDirection === 'IN'" (click)="setSpendingDirection('IN')">Inkomsten</button>
+            </div>
+          </div>
+
+          <div class="grid gap-4 sm:grid-cols-3">
+            <div class="metric-card">
+              <p class="text-xs text-slate-500">{{ spendingDirectionLabel }} deze maand</p>
+              <p class="mt-2 text-2xl font-semibold" [class.text-rose-600]="spendingDirection === 'OUT'" [class.text-emerald-600]="spendingDirection === 'IN'">
+                {{ spendingDirectionAmount | number:'1.2-2' }}
+              </p>
+              <p class="text-xs text-slate-400">{{ primaryCurrency }}</p>
+            </div>
+            <div class="metric-card">
+              <p class="text-xs text-slate-500">Top categorie</p>
+              <p class="mt-2 text-lg font-semibold text-slate-900">{{ topSpendingItems[0]?.category || 'N.v.t.' }}</p>
+              <p class="text-xs text-slate-400">{{ topSpendingItems[0]?.total | number:'1.2-2' }} {{ primaryCurrency }}</p>
+            </div>
+            <div class="metric-card">
+              <p class="text-xs text-slate-500">Gem. dag</p>
+              <p class="mt-2 text-2xl font-semibold text-slate-900">{{ averageDailyAmount | number:'1.2-2' }}</p>
+              <p class="text-xs text-slate-400">EUR / dag</p>
+            </div>
+          </div>
+
+          <div class="spending-layout">
+            <div class="card-surface rounded-3xl p-6 shadow-card">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h2 class="section-title">Categorieen</h2>
+                  <p class="section-subtitle">
+                    {{ spendingDirection === 'OUT' ? 'Klik om uitgaven te filteren' : 'Klik om inkomsten te filteren' }}
+                  </p>
+                </div>
+                <span class="pill bg-slate-100 text-slate-600">{{ primaryCurrency }}</span>
+              </div>
+              <div class="mt-4 space-y-3">
+                <button type="button" class="category-row" [class.active]="spendingSelectedCategory === 'ALL'" (click)="clearSpendingCategory()">
+                  <div class="category-main">
+                    <div class="category-line">
+                      <p class="category-name">Alle categorieen</p>
+                      <p class="category-amount">{{ spendingCategoryTotal | number:'1.2-2' }} {{ primaryCurrency }}</p>
+                    </div>
+                    <p class="category-sub">
+                      {{ spendingDirection === 'OUT' ? 'Overzicht van alle uitgaven' : 'Overzicht van alle inkomsten' }}
+                    </p>
+                  </div>
+                </button>
+
+                <button type="button" class="category-row" *ngFor="let item of spendingCategoryList" [class.active]="spendingSelectedCategory === item.category" (click)="setSpendingCategory(item.category)">
+                  <div class="category-main">
+                    <div class="category-line">
+                      <p class="category-name">{{ item.category }}</p>
+                      <p class="category-amount">{{ item.total | number:'1.2-2' }}</p>
+                    </div>
+                    <div class="category-bar">
+                      <div class="category-bar-fill" [style.width.%]="(item.total / (spendingCategoryTotal || 1)) * 100"></div>
+                    </div>
+                    <p class="category-sub">{{ ((item.total / (spendingCategoryTotal || 1)) * 100) | number:'1.0-0' }}% van totaal</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <div class="card-surface rounded-3xl p-6 shadow-card">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 class="section-title">Transacties</h2>
+                  <p class="section-subtitle">
+                    {{ spendingSelectedCategory === 'ALL'
+                      ? (spendingDirection === 'OUT' ? 'Alle uitgaven' : 'Alle inkomsten')
+                      : spendingSelectedCategory }}
+                  </p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="pill bg-slate-100 text-slate-600">{{ spendingSelectedTotal | number:'1.2-2' }} {{ primaryCurrency }}</span>
+                  <button class="pill bg-slate-100 text-slate-600" *ngIf="spendingSelectedCategory !== 'ALL'" (click)="clearSpendingCategory()">Reset</button>
+                </div>
+              </div>
+              <div class="mt-4 space-y-3">
+                <div class="transaction-row" *ngFor="let tx of spendingCategoryPageTransactions">
+                  <div>
+                    <p class="text-sm font-semibold text-slate-900">{{ tx.merchantName || tx.description }}</p>
+                    <p class="text-[11px] text-slate-400">{{ accountLabel(tx.accountId) }} · {{ tx.bookingDate }}</p>
+                    <div class="tx-meta">
+                      <span class="category-pill">{{ tx.category || 'Overig' }}</span>
+                      <span class="text-[11px] text-slate-400" *ngIf="tx.counterpartyIban">IBAN {{ tx.counterpartyIban }}</span>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-sm font-semibold" [class.text-rose-600]="spendingDirection === 'OUT'" [class.text-emerald-600]="spendingDirection === 'IN'">
+                      {{ spendingDirection === 'OUT' ? '-' : '+' }}{{ tx.amount | number:'1.2-2' }} {{ tx.currency }}
+                    </p>
+                    <p class="text-[11px] text-slate-400">{{ tx.category || 'Overig' }}</p>
+                  </div>
+                </div>
+                <div class="text-xs text-slate-500" *ngIf="spendingCategoryTransactions.length === 0">
+                  Geen transacties gevonden voor deze selectie.
+                </div>
+              </div>
+              <div class="pagination" *ngIf="spendingCategoryTransactions.length > spendingTxPageSize">
+                <button class="pill bg-slate-100 text-slate-600" (click)="prevSpendingPage()" [disabled]="spendingTxPage === 1">Vorige</button>
+                <span class="text-xs text-slate-500">Pagina {{ spendingTxPage }} / {{ spendingTxTotalPages }}</span>
+                <button class="pill bg-slate-100 text-slate-600" (click)="nextSpendingPage()" [disabled]="spendingTxPage === spendingTxTotalPages">Volgende</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid gap-6 lg:grid-cols-2">
+            <div class="card-surface rounded-3xl p-6 shadow-card">
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <h2 class="section-title">Vaste kosten</h2>
+                  <p class="section-subtitle">Herkenning laatste {{ recurringMonths }} maanden</p>
+                </div>
+                <select class="pill bg-slate-100 text-slate-600" [(ngModel)]="recurringMonths" (change)="loadRecurring()">
+                  <option [ngValue]="3">3m</option>
+                  <option [ngValue]="6">6m</option>
+                  <option [ngValue]="9">9m</option>
+                  <option [ngValue]="12">12m</option>
+                </select>
+              </div>
+              <div class="mt-4 space-y-3">
+                <div class="recurring-row" *ngFor="let item of recurring">
+                  <div>
+                    <p class="text-sm font-semibold text-slate-900">{{ item.name }}</p>
+                    <p class="text-xs text-slate-500">{{ item.occurrences }} keer · {{ item.months }} maanden</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-sm font-semibold text-slate-900">{{ item.averageAmount | number:'1.2-2' }} {{ item.currency }}</p>
+                    <p class="text-xs text-slate-400">{{ item.lastDate || '-' }}</p>
+                  </div>
+                </div>
+                <div class="text-xs text-slate-500" *ngIf="recurring.length === 0">
+                  Nog geen vaste kosten gevonden.
+                </div>
+              </div>
+            </div>
+
+            <div class="card-surface rounded-3xl p-6 shadow-card">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h2 class="section-title">Spaarpotten</h2>
+                  <p class="section-subtitle">Doelen met automatische bijdrage</p>
+                </div>
+                <span class="pill bg-amber-50 text-amber-700">Auto</span>
+              </div>
+              <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                <input class="filter-input" [(ngModel)]="goalName" placeholder="Naam (bv. Vakantie)">
+                <input class="filter-input" [(ngModel)]="goalTarget" placeholder="Doelbedrag">
+                <input class="filter-input" [(ngModel)]="goalMonthly" placeholder="Maandelijkse bijdrage">
+                <div class="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">
+                  <input type="checkbox" [(ngModel)]="goalAuto">
+                  Auto bijdragen
+                </div>
+              </div>
+              <button class="mt-3 pill bg-navy-900 text-white" (click)="createGoal()">Spaarpot toevoegen</button>
+              <div class="mt-5 space-y-4">
+                <div class="goal-row" *ngFor="let goal of goals">
+                  <div class="flex items-center justify-between gap-3">
+                    <div>
+                      <p class="text-sm font-semibold text-slate-900">{{ goal.name }}</p>
+                      <p class="text-xs text-slate-500">Doel {{ goal.targetAmount | number:'1.2-2' }} {{ goal.currency }}</p>
+                    </div>
+                    <span class="pill bg-slate-100 text-slate-600">{{ goalProgress(goal) | number:'1.0-0' }}%</span>
+                  </div>
+                  <div class="goal-bar">
+                    <div class="goal-bar-fill" [style.width.%]="goalProgress(goal)"></div>
+                  </div>
+                  <div class="goal-grid">
+                    <label class="goal-field">
+                      <span>Huidig</span>
+                      <input class="filter-input" [(ngModel)]="goalDrafts[goal.id]" [ngModelOptions]="{standalone: true}">
+                    </label>
+                    <label class="goal-field">
+                      <span>Maand</span>
+                      <input class="filter-input" [(ngModel)]="goalMonthlyDrafts[goal.id]" [ngModelOptions]="{standalone: true}">
+                    </label>
+                    <label class="goal-field goal-field-inline">
+                      <span>Auto</span>
+                      <input type="checkbox" [(ngModel)]="goalAutoDrafts[goal.id]" [ngModelOptions]="{standalone: true}">
+                    </label>
+                  </div>
+                  <div class="goal-actions">
+                    <button class="pill bg-navy-900 text-white" (click)="updateGoal(goal)">Opslaan</button>
+                    <button class="pill bg-rose-50 text-rose-600" (click)="deleteGoal(goal)">Verwijder</button>
+                  </div>
+                </div>
+                <div class="text-xs text-slate-500" *ngIf="goals.length === 0">
+                  Nog geen spaarpotten. Voeg er eentje toe om automatisch te sparen.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid gap-6 lg:grid-cols-2">
+            <div class="card-surface rounded-3xl p-6 shadow-card">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h2 class="section-title">Top merchants</h2>
+                  <p class="section-subtitle">Grootste uitgaven</p>
+                </div>
+              </div>
+              <div class="mt-4 space-y-3">
+                <div class="flex items-center justify-between text-sm" *ngFor="let merchant of topMerchants">
+                  <div>
+                    <p class="font-semibold text-slate-900">{{ merchant.name }}</p>
+                    <p class="text-xs text-slate-500">{{ merchant.count }} transacties</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="font-semibold text-slate-900">{{ merchant.total | number:'1.2-2' }} EUR</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+              <div class="card-surface rounded-3xl p-6 shadow-card">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h2 class="section-title">Cashflow trend</h2>
+                    <p class="section-subtitle">Laatste 14 dagen</p>
+                  </div>
+                </div>
+              <div class="mt-4 trend-chart trend-chart-alt">
+                <svg viewBox="0 0 240 90" class="w-full trend-svg" aria-hidden="true">
+                  <g class="trend-grid">
+                    <line x1="0" y1="12" x2="240" y2="12"></line>
+                    <line x1="0" y1="45" x2="240" y2="45"></line>
+                    <line x1="0" y1="78" x2="240" y2="78"></line>
+                  </g>
+                  <polyline [attr.points]="cashflowSparklinePoints" class="trend-line cashflow"></polyline>
+                </svg>
+              </div>
+              <div class="trend-scale">
+                <span>Netto {{ cashflowTotal14 | number:'1.0-0' }} EUR</span>
+                <span>Gem. {{ cashflowAvg14 | number:'1.0-0' }} EUR/dag</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section *ngIf="activeSection === 'transactions'" class="space-y-6">
+          <div class="card-surface rounded-3xl p-6 shadow-card">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h2 class="section-title">Transacties</h2>
+                <p class="section-subtitle">Laatste bewegingen en AI categorisatie</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="pill bg-slate-100 text-slate-600">{{ filteredTransactions.length }} items</span>
+                <button class="pill bg-slate-100 text-slate-600" *ngIf="selectedAccountIds.length" (click)="clearAccountFilter()">
+                  Filter wissen
+                </button>
+              </div>
+            </div>
+            <div class="mt-3 flex flex-wrap items-center gap-2" *ngIf="selectedAccountIds.length">
+              <span class="pill bg-slate-100 text-slate-600">Filter: {{ selectedAccountLabel() }}</span>
+              <span class="pill bg-emerald-50 text-emerald-700" *ngIf="directionFilter !== 'ALL'">
+                {{ directionFilter === 'IN' ? 'Inkomsten' : 'Uitgaven' }}
+              </span>
+            </div>
+            <div class="mt-4 space-y-3">
+              <div class="transaction-row" *ngFor="let tx of transactionsPageItems">
+                <div>
+                  <p class="text-sm font-semibold text-slate-900">{{ tx.merchantName || tx.description }}</p>
+                  <p class="text-xs text-slate-500">{{ accountLabel(tx.accountId) }}</p>
+                  <div class="tx-meta">
+                    <span class="category-pill">{{ tx.category || 'Overig' }}</span>
+                    <span class="text-[11px] text-slate-400" *ngIf="tx.counterpartyIban">IBAN {{ tx.counterpartyIban }}</span>
+                  </div>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm font-semibold" [class.text-emerald-600]="tx.direction === 'IN'" [class.text-rose-600]="tx.direction === 'OUT'">
+                    {{ tx.direction === 'OUT' ? '-' : '+' }}{{ tx.amount | number:'1.2-2' }} {{ tx.currency }}
+                  </p>
+                  <p class="text-xs text-slate-400">{{ tx.bookingDate || tx.valueDate }}</p>
+                </div>
+                <div class="transaction-actions">
+                  <button class="pill bg-slate-100 text-slate-600" *ngIf="editingCategoryId !== tx.id" (click)="startEditCategory(tx)">Categorie</button>
+                </div>
+                <div class="transaction-edit" *ngIf="editingCategoryId === tx.id">
+                  <select class="filter-input" [(ngModel)]="categoryDrafts[tx.id]">
+                    <option *ngFor="let cat of categoriesAvailable" [value]="cat">{{ cat }}</option>
+                  </select>
+                  <label class="mt-2 flex items-center gap-2 text-xs text-slate-500">
+                    <input type="checkbox" [(ngModel)]="categoryApplyFuture[tx.id]">
+                    Toepassen op toekomstige transacties
+                  </label>
+                  <div class="mt-2 flex gap-2">
+                    <button class="pill bg-navy-900 text-white" (click)="saveCategory(tx)">Opslaan</button>
+                    <button class="pill bg-slate-100 text-slate-600" (click)="cancelEditCategory()">Annuleer</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="pagination" *ngIf="filteredTransactions.length > transactionsPageSize">
+              <button class="pill bg-slate-100 text-slate-600" (click)="prevTransactionsPage()" [disabled]="transactionsPage === 1">Vorige</button>
+              <span class="text-xs text-slate-500">Pagina {{ transactionsPage }} / {{ transactionsTotalPages }}</span>
+              <button class="pill bg-slate-100 text-slate-600" (click)="nextTransactionsPage()" [disabled]="transactionsPage === transactionsTotalPages">Volgende</button>
+            </div>
+          </div>
+        </section>
+
+        <section *ngIf="activeSection === 'audit'" class="space-y-6">
+          <div class="grid gap-6 lg:grid-cols-[1.1fr_1.6fr]">
+            <div class="space-y-6">
+              <div class="card-surface rounded-3xl p-6 shadow-card">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h2 class="section-title">Smart rules</h2>
+                    <p class="section-subtitle">Auto taggen op merchant, IBAN of beschrijving</p>
+                  </div>
+                  <span class="pill bg-amber-50 text-amber-700">Auto tag</span>
+                </div>
+                <p class="mt-2 text-xs text-slate-500">Tip: Merchant = winkelnaam, IBAN = overschrijvingen, Beschrijving = banktekst.</p>
+                <div class="mt-4 grid gap-3 sm:grid-cols-4">
+                  <label class="goal-field">
+                    <span>Type</span>
+                    <select class="filter-input" [(ngModel)]="ruleMatchType" (change)="onRuleMatchTypeChange()">
+                      <option *ngFor="let rule of ruleMatchTypes" [value]="rule.value">{{ rule.label }}</option>
+                    </select>
+                  </label>
+                  <label class="goal-field">
+                    <span>Match type</span>
+                    <select class="filter-input" [(ngModel)]="ruleMatchMode" [disabled]="ruleMatchType === 'IBAN'">
+                      <option *ngFor="let mode of ruleMatchModes" [value]="mode.value">{{ mode.label }}</option>
+                    </select>
+                  </label>
+                  <label class="goal-field">
+                    <span>Match</span>
+                    <input class="filter-input" [(ngModel)]="ruleMatchValue" placeholder="Bijv. carrefour">
+                  </label>
+                  <label class="goal-field">
+                    <span>Categorie</span>
+                    <select class="filter-input" [(ngModel)]="ruleCategory">
+                      <option *ngFor="let cat of categoriesAvailable" [value]="cat">{{ cat }}</option>
+                    </select>
+                  </label>
+                </div>
+                <label class="mt-3 flex items-center gap-2 text-xs text-slate-500">
+                  <input type="checkbox" [(ngModel)]="ruleApplyHistory">
+                  Ook toepassen op bestaande transacties
+                </label>
+                <button class="mt-3 pill bg-navy-900 text-white" (click)="createRule()">Rule toevoegen</button>
+
+                <div class="mt-5 space-y-3">
+                  <div class="rule-row" *ngFor="let rule of rules">
+                    <div>
+                      <p class="text-sm font-semibold text-slate-900">{{ rule.category }}</p>
+                      <p class="text-xs text-slate-500">{{ rule.matchType }} · {{ rule.matchMode || 'CONTAINS' }} · {{ rule.matchValue }}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <button class="pill bg-slate-100 text-slate-600" (click)="applyRuleHistory(rule)">History</button>
+                      <button class="pill bg-rose-50 text-rose-600" (click)="deleteRule(rule)">Delete</button>
+                    </div>
+                  </div>
+                  <div class="text-xs text-slate-500" *ngIf="rules.length === 0">
+                    Nog geen rules. Voeg er een toe om automatisch te categoriseren.
+                  </div>
+                </div>
+              </div>
+
+              <div class="card-surface rounded-3xl p-6 shadow-card">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h2 class="section-title">Categorieen beheren</h2>
+                    <p class="section-subtitle">Labels voor AI, filters en rules</p>
+                  </div>
+                  <span class="pill bg-slate-100 text-slate-600">{{ categoryEntities.length }}</span>
+                </div>
+                <div class="mt-4 flex flex-wrap gap-2">
+                  <input class="filter-input flex-1 min-w-[180px]" [(ngModel)]="categoryNewName" placeholder="Nieuwe categorie">
+                  <button class="pill bg-navy-900 text-white" (click)="createCategory()">Toevoegen</button>
+                </div>
+                <div class="mt-4 space-y-2">
+                  <div class="category-manage-row" *ngFor="let cat of categoryEntities">
+                    <div class="category-manage-main" *ngIf="categoryEditingId !== cat.id">
+                      <p class="text-sm font-semibold text-slate-900">{{ cat.name }}</p>
+                      <p class="text-[11px] text-slate-400">Aangemaakt {{ cat.createdAt | date:'shortDate' }}</p>
+                    </div>
+                    <div class="category-manage-edit" *ngIf="categoryEditingId === cat.id">
+                      <input class="filter-input" [(ngModel)]="categoryEditDrafts[cat.id]">
+                    </div>
+                    <div class="category-manage-actions">
+                      <button class="pill bg-slate-100 text-slate-600" *ngIf="categoryEditingId !== cat.id" (click)="startEditCategoryEntity(cat)">Bewerken</button>
+                      <button class="pill bg-navy-900 text-white" *ngIf="categoryEditingId === cat.id" (click)="saveCategoryEntity(cat)">Opslaan</button>
+                      <button class="pill bg-slate-100 text-slate-600" *ngIf="categoryEditingId === cat.id" (click)="cancelEditCategoryEntity()">Annuleer</button>
+                      <button class="pill bg-rose-50 text-rose-600" (click)="deleteCategoryEntity(cat)">Verwijderen</button>
+                    </div>
+                  </div>
+                  <div class="text-xs text-slate-500" *ngIf="categoryEntities.length === 0">
+                    Nog geen categorieen. Voeg er eentje toe om filters en AI te versterken.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-surface rounded-3xl p-6 shadow-card">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h2 class="section-title">AI audit</h2>
+                  <p class="section-subtitle">Laatste classificaties</p>
+                </div>
+                <span class="pill bg-slate-100 text-slate-600">{{ auditTransactions.length }}</span>
+              </div>
+              <div class="mt-4 space-y-3">
+                <div class="audit-row" *ngFor="let tx of auditPageItems">
+                  <div>
+                    <p class="text-sm font-semibold text-slate-900">{{ tx.merchantName || tx.description }}</p>
+                    <p class="text-xs text-slate-500">{{ accountLabel(tx.accountId) }}</p>
+                    <p class="text-[11px] text-slate-400">Reden: {{ tx.categoryReason || 'n/a' }}</p>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-xs font-semibold text-slate-700">{{ tx.category || 'Overig' }}</p>
+                    <p class="text-[11px] text-slate-400">Zekerheid: {{ formatConfidence(tx.categoryConfidence) }}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="pagination" *ngIf="auditTransactions.length > auditPageSize">
+                <button class="pill bg-slate-100 text-slate-600" (click)="prevAuditPage()" [disabled]="auditPage === 1">Vorige</button>
+                <span class="text-xs text-slate-500">Pagina {{ auditPage }} / {{ auditTotalPages }}</span>
+                <button class="pill bg-slate-100 text-slate-600" (click)="nextAuditPage()" [disabled]="auditPage === auditTotalPages">Volgende</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section *ngIf="activeSection === 'household'" class="space-y-6">
+          <div class="card-surface rounded-3xl p-6 shadow-card">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 class="section-title">Household balancing</h2>
+                <p class="section-subtitle">Wie moet wie terugbetalen</p>
+              </div>
+              <button class="pill bg-slate-100 text-slate-600" (click)="loadHouseholdBalance()">Vernieuwen</button>
+            </div>
+            <div class="mt-4 flex flex-wrap gap-3">
+              <label class="goal-field">
+                <span>Maand</span>
+                <input class="filter-input" type="month" [(ngModel)]="householdBalanceMonth" (change)="loadHouseholdBalance()">
+              </label>
+              <label class="goal-field goal-field-inline">
+                <span>Include shared</span>
+                <input type="checkbox" [(ngModel)]="includeSharedBalance" (change)="loadHouseholdBalance()">
+              </label>
+              <label class="goal-field">
+                <span>Household</span>
+                <select class="filter-input" [(ngModel)]="shareHouseholdId" (change)="loadHouseholdBalance()">
+                  <option *ngFor="let h of households" [value]="h.id">{{ h.name }} ({{ h.role }})</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="mt-4 grid gap-4 sm:grid-cols-3" *ngIf="householdBalance">
+              <div class="metric-card">
+                <p class="text-xs text-slate-500">Totaal uitgaven</p>
+                <p class="mt-2 text-xl font-semibold text-slate-900">{{ householdBalance.totalExpenses | number:'1.2-2' }}</p>
+                <p class="text-xs text-slate-400">EUR</p>
+              </div>
+              <div class="metric-card">
+                <p class="text-xs text-slate-500">Per persoon</p>
+                <p class="mt-2 text-xl font-semibold text-slate-900">{{ householdBalance.perMemberShare | number:'1.2-2' }}</p>
+                <p class="text-xs text-slate-400">EUR</p>
+              </div>
+              <div class="metric-card">
+                <p class="text-xs text-slate-500">Leden</p>
+                <p class="mt-2 text-xl font-semibold text-slate-900">{{ householdBalance.members.length }}</p>
+                <p class="text-xs text-slate-400">members</p>
+              </div>
+            </div>
+
+            <div class="mt-4 space-y-3" *ngIf="householdBalance">
+              <div class="balance-row" *ngFor="let member of householdBalance.members">
+                <div>
+                  <p class="text-sm font-semibold text-slate-900">{{ member.email }}</p>
+                  <p class="text-xs text-slate-500">Betaald {{ member.paid | number:'1.2-2' }} EUR · Deel {{ member.share | number:'1.2-2' }} EUR</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm font-semibold" [class.text-emerald-600]="member.balance > 0" [class.text-rose-600]="member.balance < 0">
+                    {{ member.balance | number:'1.2-2' }} EUR
+                  </p>
+                </div>
+              </div>
+
+              <div class="settlement-card" *ngIf="householdSettlements.length > 0">
+                <p class="text-xs font-semibold text-slate-500">Voorstel terugbetalingen</p>
+                <div class="mt-2 space-y-2">
+                  <div class="settlement-row" *ngFor="let item of householdSettlements">
+                    <span class="settlement-name">{{ item.from }}</span>
+                    <span class="settlement-arrow">→</span>
+                    <span class="settlement-name">{{ item.to }}</span>
+                    <span class="settlement-amount">{{ item.amount | number:'1.2-2' }} EUR</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="text-xs text-slate-500" *ngIf="householdBalance && householdSettlements.length === 0">
+                Alles is in balans voor deze maand.
+              </div>
+            </div>
+
+            <div class="text-xs text-slate-500" *ngIf="!householdBalance">
+              Selecteer een household om de balans te zien.
+            </div>
+          </div>
+
+          <div class="card-surface rounded-3xl p-6 shadow-card">
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="section-title">Household beheer</h2>
+                <p class="section-subtitle">Gezamenlijke uitgaven</p>
+              </div>
+            </div>
+            <div class="mt-4 grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+              <div class="space-y-3">
+                <label class="text-xs font-semibold text-slate-500">Standaard household voor delen</label>
+                <select class="filter-input" [(ngModel)]="shareHouseholdId" (change)="loadHouseholdBalance()">
+                  <option *ngFor="let h of households" [value]="h.id">{{ h.name }} ({{ h.role }})</option>
+                </select>
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p class="text-xs font-semibold text-slate-500">Nieuwe household</p>
+                  <div class="mt-3 flex gap-2">
+                    <input class="filter-input" [(ngModel)]="householdName" placeholder="Bijv. Poelmans">
+                    <button class="pill bg-navy-900 text-white" (click)="createHousehold()">Aanmaken</button>
+                  </div>
+                </div>
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p class="text-xs font-semibold text-slate-500">Deelname via invite</p>
+                  <div class="mt-3 flex gap-2">
+                    <input class="filter-input" [(ngModel)]="householdInvite" placeholder="Invite code">
+                    <button class="pill bg-slate-100 text-slate-600" (click)="joinHousehold()">Join</button>
+                  </div>
+                </div>
+              </div>
+              <div class="space-y-3">
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4" *ngFor="let h of households">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h3 class="text-sm font-semibold">{{ h.name }}</h3>
+                      <p class="text-xs text-slate-500">Invite: {{ h.inviteCode }}</p>
+                    </div>
+                    <span class="pill bg-navy-100 text-navy-700">{{ h.role }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section *ngIf="activeSection === 'connections'" class="card-surface rounded-3xl p-6 shadow-card">
+          <div class="grid gap-6 lg:grid-cols-2">
+            <div>
+              <div class="flex items-center justify-between">
+                <div>
+                  <h2 class="section-title">Connecties</h2>
+                  <p class="section-subtitle">Banken en wallets</p>
+                </div>
+                <span class="pill bg-slate-100 text-slate-600">{{ connections.length }}</span>
+              </div>
+              <div class="mt-4 space-y-3">
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4" *ngFor="let c of connections">
+                  <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 class="text-sm font-semibold">{{ c.displayName }}</h3>
+                      <div class="mt-2 flex flex-wrap gap-2 text-[11px] font-semibold text-navy-700">
+                        <span class="pill bg-navy-100 text-navy-700">{{ c.providerId }}</span>
+                        <span class="pill bg-navy-100 text-navy-700">{{ c.type }}</span>
+                        <span class="pill bg-emerald-100 text-emerald-700">{{ c.status }}</span>
+                      </div>
+                      <p class="mt-2 text-xs text-rose-600" *ngIf="c.errorMessage">{{ c.errorMessage }}</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                      <button class="pill bg-slate-100 text-slate-600" (click)="toggleAutoSync(c)">{{ c.autoSyncEnabled ? 'Auto-sync aan' : 'Auto-sync uit' }}</button>
+                      <button class="pill bg-slate-100 text-slate-600" (click)="initiateConnection(c)">Start koppeling</button>
+                      <button class="pill bg-navy-900 text-white" (click)="syncConnection(c)">Sync</button>
+                      <button class="pill bg-rose-50 text-rose-600" (click)="disableConnection(c)">Stop</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="rounded-2xl border border-dashed border-slate-200 px-4 py-6 text-center text-sm text-slate-400" *ngIf="connections.length === 0">
+                  Nog geen connecties.
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between">
+                <div>
+                  <h2 class="section-title">Nieuwe koppeling</h2>
+                  <p class="section-subtitle">Kies provider</p>
+                </div>
+              </div>
+              <div class="mt-4 flex flex-wrap gap-2">
+                <button class="pill bg-slate-100 text-slate-600" *ngFor="let p of providers" (click)="selectProvider(p)">
+                  {{ p.name }}
+                  <small class="block text-[10px] text-slate-400">{{ p.type }}</small>
+                </button>
+              </div>
+
+              <div class="mt-6 grid gap-4 text-sm" *ngIf="selectedProvider">
+                <div>
+                  <h3 class="font-semibold text-navy-900">{{ selectedProvider.name }}</h3>
+                  <label class="mt-3 block text-xs font-semibold text-slate-500">Naam</label>
+                  <input class="filter-input" [(ngModel)]="connectionName" placeholder="Mijn {{ selectedProvider.name }}">
+                </div>
+                <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500" *ngIf="isTinkSelected()">
+                  Na het aanmaken open je de Tink-link om toestemming te geven.
+                </div>
+                <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500" *ngIf="isEnableBankingSelected()">
+                  Selecteer je bank via Enable Banking. Na het aanmaken open je de link om toestemming te geven.
+                </div>
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs" *ngIf="isEnableBankingSelected()">
+                  <div class="flex items-center justify-between gap-3">
+                    <div>
+                      <p class="font-semibold text-slate-700">Banklijst (Enable Banking)</p>
+                      <p class="text-[11px] text-slate-500">Zoek je bank en vul automatisch naam + land in.</p>
+                    </div>
+                    <button class="pill bg-white text-slate-600" (click)="loadEnableBankingAspsps()">Vernieuwen</button>
+                  </div>
+                  <input class="mt-3 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs" [(ngModel)]="enableBankingQuery" placeholder="Zoek bank (bv. Belfius)">
+                  <select class="mt-3 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs" (change)="selectEnableBankingAspsp($any($event.target).value)">
+                    <option value="">Selecteer bank</option>
+                    <option *ngFor="let bank of filteredEnableBankingAspsps" [value]="bank.name">{{ bank.name }} ({{ bank.country }})</option>
+                  </select>
+                  <p class="mt-2 text-[11px] text-slate-500" *ngIf="enableBankingLoading">Banken laden...</p>
+                </div>
+                <div class="grid gap-3" *ngFor="let field of selectedProvider.fields">
+                  <label class="text-xs font-semibold text-slate-500">{{ field.label }}</label>
+                  <input class="filter-input" [type]="field.secret ? 'password' : 'text'" [(ngModel)]="connectionConfig[field.key]" [placeholder]="field.placeholder">
+                </div>
+                <button class="pill bg-navy-900 text-white" (click)="createConnection()">Koppeling maken</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="selectedCryptoAccount" (click)="clearCryptoSelection()"></div>
+  <div class="crypto-modal" *ngIf="selectedCryptoAccount as asset">
+    <div class="crypto-modal-card" (click)="$event.stopPropagation()">
+      <div class="crypto-modal-header">
+        <div class="crypto-modal-title">
+          <img class="crypto-icon large" [src]="cryptoIconUrl(asset.currency)" [alt]="asset.currency" (error)="onCoinIconError($event, asset.currency)">
+          <div>
+            <p class="text-xs uppercase tracking-[0.2em] text-slate-400">{{ asset.provider }}</p>
+            <p class="text-lg font-semibold text-slate-900">{{ asset.name }}</p>
+            <p class="text-xs text-slate-500">{{ asset.currency }}</p>
+          </div>
+        </div>
+        <button class="pill bg-slate-100 text-slate-600" (click)="clearCryptoSelection()">Sluiten</button>
+      </div>
+
+      <div class="crypto-detail-stats">
+        <div class="crypto-stat">
+          <p class="text-[11px] text-slate-500">Huidige waarde</p>
+          <p class="text-sm font-semibold text-slate-900">{{ asset.currentFiatValue | number:'1.2-2' }} EUR</p>
+        </div>
+        <div class="crypto-stat">
+          <p class="text-[11px] text-slate-500">Holdings</p>
+          <p class="text-sm font-semibold text-slate-900">{{ asset.currentBalance | number:'1.4-4' }} {{ asset.currency }}</p>
+        </div>
+        <div class="crypto-stat">
+          <p class="text-[11px] text-slate-500">Prijs / coin</p>
+          <p class="text-sm font-semibold text-slate-900">{{ cryptoUnitPrice(asset) | number:'1.2-6' }} EUR</p>
+        </div>
+      </div>
+
+      <div class="mt-5">
+        <div class="flex items-center justify-between">
+          <p class="text-xs font-semibold text-slate-500 uppercase">Recente transacties</p>
+          <button class="pill bg-slate-100 text-slate-600" (click)="openCryptoTransactions()">Bekijk alles</button>
+        </div>
+        <div class="mt-3 space-y-3" *ngIf="cryptoDetailTransactions.length > 0; else noCryptoTxModal">
+          <div class="transaction-row" *ngFor="let tx of cryptoDetailTransactions">
+            <div>
+              <p class="text-sm font-semibold text-slate-900">{{ tx.merchantName || tx.description || 'Transactie' }}</p>
+              <p class="text-xs text-slate-500">{{ tx.bookingDate || tx.valueDate }}</p>
+              <p class="text-[11px] text-slate-400" *ngIf="tx.counterpartyIban">IBAN {{ tx.counterpartyIban }}</p>
+            </div>
+            <div class="text-right">
+              <p class="text-sm font-semibold" [class.text-emerald-600]="tx.direction === 'IN'" [class.text-rose-600]="tx.direction === 'OUT'">
+                {{ tx.direction === 'OUT' ? '-' : '+' }}{{ tx.amount | number:'1.2-2' }} {{ tx.currency }}
+              </p>
+              <p class="text-[11px] text-slate-400">{{ tx.category || 'Overig' }}</p>
+            </div>
+          </div>
+        </div>
+        <ng-template #noCryptoTxModal>
+          <p class="text-xs text-slate-500">Nog geen transacties voor deze asset.</p>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+
+  <nav class="mobile-nav ios-nav fixed bottom-0 left-0 right-0 z-40 lg:hidden">
+    <div class="ios-bar">
+      <button class="ios-tab" [class.ios-tab-active]="activeSection === 'overview'" (click)="setSection('overview')">
+        <svg viewBox="0 0 24 24" class="h-6 w-6" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5v8a1 1 0 0 1-1 1h-5.5v-5.5h-3V20H5a1 1 0 0 1-1-1z" fill="currentColor"/></svg>
+        <span>Home</span>
+      </button>
+      <button class="ios-tab" [class.ios-tab-active]="activeSection === 'accounts'" (click)="setSection('accounts')">
+        <svg viewBox="0 0 24 24" class="h-6 w-6" aria-hidden="true"><path d="M4 6h16a2 2 0 0 1 2 2v2H2V8a2 2 0 0 1 2-2zm-2 8h20v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z" fill="currentColor"/></svg>
+        <span>Rek.</span>
+      </button>
+      <button class="ios-fab" (click)="setSection('spending')">
+        <svg viewBox="0 0 24 24" class="h-7 w-7" aria-hidden="true"><path d="M5 12h4v8H5zM10 4h4v16h-4zM15 9h4v11h-4z" fill="currentColor"/></svg>
+      </button>
+      <button class="ios-tab" [class.ios-tab-active]="activeSection === 'transactions'" (click)="setSection('transactions')">
+        <svg viewBox="0 0 24 24" class="h-6 w-6" aria-hidden="true"><path d="M5 7h9v3H5zm0 7h14v3H5zm0-3h14v2H5z" fill="currentColor"/></svg>
+        <span>Trans.</span>
+      </button>
+      <button class="ios-tab" [class.ios-tab-active]="mobileMoreOpen" (click)="toggleMobileMore()">
+        <svg viewBox="0 0 24 24" class="h-6 w-6" aria-hidden="true"><circle cx="5" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="19" cy="12" r="2" fill="currentColor"/></svg>
+        <span>Meer</span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm lg:hidden" *ngIf="mobileMoreOpen" (click)="closeMobileMore()"></div>
+  <div class="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl border border-slate-200 bg-white p-4 shadow-2xl lg:hidden" *ngIf="mobileMoreOpen">
+    <div class="mx-auto max-w-7xl space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="font-display text-lg">Meer opties</h3>
+        <button class="pill bg-slate-100 text-slate-600" (click)="closeMobileMore()">Sluiten</button>
+      </div>
+      <div class="grid gap-3">
+        <button class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold" (click)="setSection('audit')">
+          <span>AI Audit</span>
+          <span class="text-xs text-slate-500">Zekerheid & redenen</span>
+        </button>
+        <button class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold" (click)="setSection('household')">
+          <span>Household</span>
+          <span class="text-xs text-slate-500">Gezamenlijk</span>
+        </button>
+        <button class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold" (click)="setSection('connections')">
+          <span>Connections</span>
+          <span class="text-xs text-slate-500">Bank & crypto</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

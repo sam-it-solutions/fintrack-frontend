@@ -1,0 +1,2 @@
+<app-auth-page *ngIf="(token$ | async) === null"></app-auth-page>
+<app-dashboard *ngIf="(token$ | async) !== null"></app-dashboard>

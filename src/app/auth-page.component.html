@@ -1,0 +1,84 @@
+<section class="auth-shell">
+  <div class="auth-bg"></div>
+  <div class="auth-container">
+    <header class="auth-header">
+      <div class="brand">
+        <div class="brand-mark">FT</div>
+        <div>
+          <h1 class="brand-title">{{ appName }}</h1>
+          <p class="brand-subtitle">{{ subtitle }}</p>
+        </div>
+      </div>
+      <div class="header-pill">Premium</div>
+    </header>
+
+    <div class="auth-grid">
+      <section class="auth-hero">
+        <div class="hero-chip">Private overview</div>
+        <h2 class="hero-title">Rust, overzicht en zekerheid in één cockpit.</h2>
+        <p class="hero-text">
+          Beheer banken, crypto en huishoudbudgetten in één strak overzicht.
+          Automatische sync, AI‑categorisatie en slimme cashflow‑inzichten.
+        </p>
+        <div class="hero-metrics">
+          <div class="metric-card">
+            <p class="metric-label">Banken</p>
+            <p class="metric-value">PSD2 / Tink</p>
+          </div>
+          <div class="metric-card">
+            <p class="metric-label">Crypto</p>
+            <p class="metric-value">Bitvavo</p>
+          </div>
+          <div class="metric-card">
+            <p class="metric-label">Household</p>
+            <p class="metric-value">Shared spend</p>
+          </div>
+        </div>
+        <ul class="hero-list">
+          <li>Automatische sync meerdere keren per dag</li>
+          <li>AI‑categorieën + audit</li>
+          <li>Heldere KPI’s en maandelijkse uitgaven</li>
+        </ul>
+      </section>
+
+      <section class="auth-card">
+        <div class="auth-toggle">
+          <button class="toggle-btn" [class.active]="mode === 'login'" (click)="switchMode('login')">Login</button>
+          <button class="toggle-btn" [class.active]="mode === 'register'" (click)="switchMode('register')">Account maken</button>
+        </div>
+
+        <h2 class="auth-title">{{ mode === 'login' ? 'Welkom terug' : 'Maak je account' }}</h2>
+        <p class="auth-subtitle">{{ mode === 'login' ? 'Log in om je financiële cockpit te openen.' : 'Start met een premium overzicht van je financiën.' }}</p>
+
+        <div class="auth-form">
+          <div class="form-field">
+            <label>Email</label>
+            <input type="email" [(ngModel)]="email" placeholder="jij@example.com">
+          </div>
+          <div class="form-field">
+            <label>Wachtwoord</label>
+            <input type="password" [(ngModel)]="password" placeholder="••••••••">
+          </div>
+
+          <button class="primary-btn" (click)="authenticate()" [disabled]="loading">
+            {{ mode === 'login' ? 'Inloggen' : 'Registreren' }}
+          </button>
+
+          <button *ngIf="mode === 'login' && passkeySupported" class="secondary-btn" (click)="loginWithPasskey()" [disabled]="passkeyBusy">
+            {{ passkeyBusy ? 'Face ID...' : 'Inloggen met Face ID' }}
+          </button>
+          <p class="hint-text" *ngIf="mode === 'login' && passkeySupported">Gebruik Face ID of Touch ID op je toestel.</p>
+          <p class="status-text" *ngIf="statusMessage">{{ statusMessage }}</p>
+        </div>
+      </section>
+    </div>
+
+    <footer class="auth-footer">
+      <span>© 2026 Sam IT Solutions</span>
+      <div class="footer-links">
+        <a routerLink="/privacy">Privacy Policy</a>
+        <a routerLink="/terms">Terms of Service</a>
+      </div>
+    </footer>
+  </div>
+</section>
