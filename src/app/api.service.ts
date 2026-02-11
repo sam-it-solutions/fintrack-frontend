@@ -45,6 +45,12 @@ export interface ConnectionResponse {
   status: string;
   autoSyncEnabled: boolean;
   lastSyncedAt?: string;
+  syncStatus?: string;
+  syncStage?: string;
+  syncProgress?: number;
+  lastSyncStartedAt?: string;
+  lastSyncCompletedAt?: string;
+  lastSyncError?: string;
   errorMessage?: string;
   createdAt: string;
 }
@@ -232,8 +238,8 @@ export class ApiService {
     return this.http.post<{ url: string }>(`${this.baseUrl}/api/connections/${connectionId}/initiate`, {}, this.authHeaders(token));
   }
 
-  syncConnection(token: string, connectionId: string): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/api/connections/${connectionId}/sync`, {}, this.authHeaders(token));
+  syncConnection(token: string, connectionId: string): Observable<ConnectionResponse> {
+    return this.http.post<ConnectionResponse>(`${this.baseUrl}/api/connections/${connectionId}/sync`, {}, this.authHeaders(token));
   }
 
   deleteConnection(token: string, connectionId: string): Observable<void> {

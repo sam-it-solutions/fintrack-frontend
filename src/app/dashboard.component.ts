@@ -136,6 +136,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   goalAutoDrafts: Record<string, boolean> = {};
 
   private tokenSub?: Subscription;
+  private syncPollTimer?: ReturnType<typeof setInterval>;
 
   constructor(private api: ApiService, private session: SessionService) {}
 
@@ -151,6 +152,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.tokenSub?.unsubscribe();
+    if (this.syncPollTimer) {
+      clearInterval(this.syncPollTimer);
+      this.syncPollTimer = undefined;
+    }
   }
 
   get token(): string | null {
@@ -235,10 +240,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       error: () => this.providers = []
     });
 
-    this.api.listConnections(this.token).subscribe({
-      next: (connections) => this.connections = connections,
-      error: () => this.connections = []
-    });
+    this.refreshConnections();
 
     this.api.summary(this.token).subscribe({
       next: (summary) => this.summary = summary,
@@ -477,15 +479,73 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (!this.token) {
       return;
     }
+    this.statusMessage = 'Sync gestart. We updaten de status...';
     this.api.syncConnection(this.token, connection.id).subscribe({
-      next: () => {
-        this.statusMessage = 'Sync gestart.';
-        this.loadAll();
+      next: (updated) => {
+        this.connections = this.connections.map((item) => item.id === updated.id ? updated : item);
+        this.updateSyncPolling();
+        this.statusMessage = updated.syncStatus === 'RUNNING'
+          ? 'Sync bezig. Even geduld.'
+          : 'Sync aangevraagd.';
       },
       error: (err) => {
         this.statusMessage = err?.error?.message ?? 'Sync mislukt.';
       }
     });
+  }
+
+  refreshConnections() {
+    if (!this.token) {
+      return;
+    }
+    this.api.listConnections(this.token).subscribe({
+      next: (connections) => {
+        this.connections = connections;
+        this.updateSyncPolling();
+      },
+      error: () => this.connections = []
+    });
+  }
+
+  private updateSyncPolling() {
+    const hasRunning = this.connections.some((connection) => connection.syncStatus === 'RUNNING');
+    if (hasRunning && !this.syncPollTimer) {
+      this.syncPollTimer = setInterval(() => this.refreshConnections(), 4000);
+    }
+    if (!hasRunning && this.syncPollTimer) {
+      clearInterval(this.syncPollTimer);
+      this.syncPollTimer = undefined;
+    }
+  }
+
+  syncStatusLabel(status?: string) {
+    switch ((status ?? '').toUpperCase()) {
+      case 'RUNNING':
+        return 'Sync bezig';
+      case 'SUCCESS':
+        return 'Sync klaar';
+      case 'FAILED':
+        return 'Sync mislukt';
+      case 'SKIPPED':
+        return 'Sync overgeslagen';
+      default:
+        return 'Sync idle';
+    }
+  }
+
+  syncStatusClass(status?: string) {
+    switch ((status ?? '').toUpperCase()) {
+      case 'RUNNING':
+        return 'sync-pill sync-running';
+      case 'SUCCESS':
+        return 'sync-pill sync-success';
+      case 'FAILED':
+        return 'sync-pill sync-failed';
+      case 'SKIPPED':
+        return 'sync-pill sync-skipped';
+      default:
+        return 'sync-pill sync-idle';
+    }
   }
 
   toggleAutoSync(connection: ConnectionResponse) {
@@ -1664,6 +1724,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private resetState() {
+    if (this.syncPollTimer) {
+      clearInterval(this.syncPollTimer);
+      this.syncPollTimer = undefined;
+    }
     this.providers = [];
     this.connections = [];
     this.accounts = [];

@@ -1105,13 +1105,28 @@
                         <span class="pill bg-navy-100 text-navy-700">{{ c.providerId }}</span>
                         <span class="pill bg-navy-100 text-navy-700">{{ c.type }}</span>
                         <span class="pill bg-emerald-100 text-emerald-700">{{ c.status }}</span>
+                        <span [class]="syncStatusClass(c.syncStatus)">{{ syncStatusLabel(c.syncStatus) }}</span>
+                      </div>
+                      <div class="mt-2 text-xs text-slate-500" *ngIf="c.syncStage">
+                        {{ c.syncStage }}
+                        <span *ngIf="c.syncProgress !== null && c.syncProgress !== undefined">· {{ c.syncProgress }}%</span>
+                      </div>
+                      <div class="sync-progress mt-2" *ngIf="c.syncProgress !== null && c.syncProgress !== undefined">
+                        <span [style.width.%]="c.syncProgress"></span>
+                      </div>
+                      <div class="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-500" *ngIf="c.lastSyncStartedAt || c.lastSyncCompletedAt">
+                        <span *ngIf="c.lastSyncStartedAt">Gestart: {{ c.lastSyncStartedAt | date:'dd/MM HH:mm' }}</span>
+                        <span *ngIf="c.lastSyncCompletedAt">Klaar: {{ c.lastSyncCompletedAt | date:'dd/MM HH:mm' }}</span>
                       </div>
                       <p class="mt-2 text-xs text-rose-600" *ngIf="c.errorMessage">{{ c.errorMessage }}</p>
+                      <p class="mt-1 text-xs text-rose-500" *ngIf="c.lastSyncError">{{ c.lastSyncError }}</p>
                     </div>
                     <div class="flex flex-wrap gap-2">
                       <button class="pill bg-slate-100 text-slate-600" (click)="toggleAutoSync(c)">{{ c.autoSyncEnabled ? 'Auto-sync aan' : 'Auto-sync uit' }}</button>
                       <button class="pill bg-slate-100 text-slate-600" (click)="initiateConnection(c)">Start koppeling</button>
-                      <button class="pill bg-navy-900 text-white" (click)="syncConnection(c)">Sync</button>
+                      <button class="pill bg-navy-900 text-white" [disabled]="c.syncStatus === 'RUNNING'" (click)="syncConnection(c)">
+                        {{ c.syncStatus === 'RUNNING' ? 'Sync bezig…' : 'Sync' }}
+                      </button>
                       <button class="pill bg-rose-50 text-rose-600" (click)="disableConnection(c)">Stop</button>
                     </div>
                   </div>
