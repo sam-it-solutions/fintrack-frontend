@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { SwUpdate } from '@angular/service-worker';
 
 @Component({
   selector: 'app-root',
@@ -6,5 +7,16 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  constructor() {}
+  constructor(private swUpdate: SwUpdate) {
+    if (this.swUpdate.isEnabled) {
+      this.swUpdate.versionUpdates.subscribe(event => {
+        if (event.type === 'VERSION_READY') {
+          this.swUpdate.activateUpdate().then(() => {
+            document.location.reload();
+          });
+        }
+      });
+      this.swUpdate.checkForUpdate().catch(() => {});
+    }
+  }
 }

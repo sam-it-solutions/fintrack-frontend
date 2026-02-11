@@ -20,12 +20,15 @@
   "dataGroups": [
     {
       "name": "api",
-      "urls": ["/api/**"],
+      "urls": [
+        "/api/**",
+        "https://fintrack-backend-676e.onrender.com/api/**"
+      ],
       "cacheConfig": {
-        "strategy": "performance",
-        "maxSize": 50,
-        "maxAge": "1h",
-        "timeout": "5s"
+        "strategy": "freshness",
+        "maxSize": 20,
+        "maxAge": "1m",
+        "timeout": "8s"
       }
     }
   ]

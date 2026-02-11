@@ -20,6 +20,7 @@ import { Subscription, firstValueFrom } from 'rxjs';
 import { isPasskeySupported, serializeRegistrationCredential, toPublicKeyCreationOptions } from './webauthn.utils';
 
 type SectionKey = 'overview' | 'accounts' | 'spending' | 'transactions' | 'audit' | 'household' | 'connections';
+type ToastType = 'success' | 'error' | 'info';
 
 @Component({
   selector: 'app-dashboard',
@@ -108,11 +109,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   enableBankingAspsps: EnableBankingAspspResponse[] = [];
   enableBankingLoading = false;
   enableBankingQuery = '';
-  statusMessage = '';
+  private _statusMessage = '';
+  toasts: Array<{ id: number; message: string; type: ToastType }> = [];
   loading = false;
   recategorizing = false;
   passkeySupported = isPasskeySupported();
   passkeyBusy = false;
+  passkeyEnabled = false;
   month = new Date().toISOString().slice(0, 7);
   householdBalanceMonth = new Date().toISOString().slice(0, 7);
   includeSharedBalance = false;
@@ -137,17 +140,32 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   private tokenSub?: Subscription;
   private syncPollTimer?: ReturnType<typeof setInterval>;
+  private toastSeq = 0;
+  private readonly handleFocus = () => {
+    if (this.token) {
+      this.loadAll();
+    }
+  };
+  private readonly handleVisibility = () => {
+    if (!document.hidden && this.token) {
+      this.loadAll();
+    }
+  };
 
   constructor(private api: ApiService, private session: SessionService) {}
 
   ngOnInit(): void {
     this.tokenSub = this.session.token$.subscribe((token) => {
       if (token) {
+        this.syncPasskeyState();
         this.loadAll();
       } else {
         this.resetState();
+        this.passkeyEnabled = false;
       }
     });
+    window.addEventListener('focus', this.handleFocus);
+    document.addEventListener('visibilitychange', this.handleVisibility);
   }
 
   ngOnDestroy(): void {
@@ -156,10 +174,80 @@ export class DashboardComponent implements OnInit, OnDestroy {
       clearInterval(this.syncPollTimer);
       this.syncPollTimer = undefined;
     }
+    window.removeEventListener('focus', this.handleFocus);
+    document.removeEventListener('visibilitychange', this.handleVisibility);
   }
 
   get token(): string | null {
     return this.session.token;
+  }
+
+  get statusMessage(): string {
+    return this._statusMessage;
+  }
+
+  set statusMessage(message: string) {
+    this._statusMessage = message;
+    if (!message) {
+      return;
+    }
+    this.pushToast(message);
+  }
+
+  private getPasskeyStorageKey(): string | null {
+    const token = this.token;
+    if (!token) {
+      return null;
+    }
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1] ?? ''));
+      const subject = payload?.sub ?? payload?.email;
+      return subject ? `fintrack_passkey_${subject}` : 'fintrack_passkey_enabled';
+    } catch {
+      return 'fintrack_passkey_enabled';
+    }
+  }
+
+  private syncPasskeyState(): void {
+    const key = this.getPasskeyStorageKey();
+    if (!key) {
+      this.passkeyEnabled = false;
+      return;
+    }
+    this.passkeyEnabled = localStorage.getItem(key) === '1';
+  }
+
+  get filterSummaryLabel(): string {
+    const parts: string[] = [];
+    if (this.month) {
+      parts.push(this.formatMonthLabel(this.month));
+    }
+    if (this.selectedAccountIds.length > 0) {
+      parts.push(`${this.selectedAccountIds.length} rekening${this.selectedAccountIds.length > 1 ? 'en' : ''}`);
+    }
+    if (this.directionFilter !== 'ALL') {
+      parts.push(this.directionFilter === 'IN' ? 'Inkomen' : 'Uitgaven');
+    }
+    if (this.transactionCategoryFilter && this.transactionCategoryFilter !== 'ALL') {
+      parts.push(this.transactionCategoryFilter);
+    }
+    const query = (this.transactionQuery || '').trim();
+    if (query) {
+      parts.push(`Zoek: ${query}`);
+    }
+    return parts.join(' · ') || 'Geen filters actief';
+  }
+
+  private formatMonthLabel(month: string): string {
+    try {
+      const date = new Date(`${month}-01T00:00:00`);
+      if (Number.isNaN(date.getTime())) {
+        return month;
+      }
+      return date.toLocaleDateString('nl-BE', { month: 'short', year: 'numeric' });
+    } catch {
+      return month;
+    }
   }
 
   setSection(section: SectionKey, options?: { preserveTransactionsRange?: boolean }) {
@@ -199,6 +287,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   closeMobileMore() {
     this.mobileMoreOpen = false;
+  }
+
+  dismissToast(id: number) {
+    this.toasts = this.toasts.filter(toast => toast.id !== id);
+  }
+
+  private pushToast(message: string, type?: ToastType) {
+    const resolvedType = type ?? this.inferToastType(message);
+    const toast = { id: ++this.toastSeq, message, type: resolvedType };
+    this.toasts = [...this.toasts, toast].slice(-3);
+    setTimeout(() => this.dismissToast(toast.id), 4200);
+  }
+
+  private inferToastType(message: string): ToastType {
+    const lower = message.toLowerCase();
+    const errorHints = ['mislukt', 'kon', 'niet', 'error', 'failed', 'verboden', 'ontbreekt', 'invalid'];
+    const successHints = ['opgeslagen', 'toegevoegd', 'bijgewerkt', 'gestart', 'klaar', 'geactiveerd', 'gedeactiveerd', 'verwijderd', 'toegevoegd'];
+    if (errorHints.some(hint => lower.includes(hint))) {
+      return 'error';
+    }
+    if (successHints.some(hint => lower.includes(hint))) {
+      return 'success';
+    }
+    return 'info';
   }
 
   applyCategoryFilter(category: string) {
@@ -305,6 +417,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
       }
       const payload = serializeRegistrationCredential(credential);
       await firstValueFrom(this.api.passkeyRegisterFinish(this.token, start.challengeId, payload));
+      const key = this.getPasskeyStorageKey();
+      if (key) {
+        localStorage.setItem(key, '1');
+      }
+      this.passkeyEnabled = true;
       this.statusMessage = 'Face ID is geactiveerd op dit toestel.';
     } catch (err: any) {
       if (err?.status === 401 || err?.status === 403) {

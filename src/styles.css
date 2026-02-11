@@ -19,6 +19,8 @@
     min-height: 100vh;
     background: linear-gradient(180deg, #f6f8fb 0%, #eef2f7 100%);
     color: #0b1320;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 

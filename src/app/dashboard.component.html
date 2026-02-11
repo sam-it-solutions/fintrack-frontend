@@ -1,5 +1,12 @@
 <div class="app-shell" [class.filters-open]="!filtersCollapsed">
   <div class="app-bg"></div>
+  <div class="toast-host" *ngIf="toasts.length > 0">
+    <div class="toast" *ngFor="let toast of toasts" [class.toast-success]="toast.type === 'success'" [class.toast-error]="toast.type === 'error'">
+      <span class="toast-dot"></span>
+      <span class="toast-message">{{ toast.message }}</span>
+      <button class="toast-close" (click)="dismissToast(toast.id)">×</button>
+    </div>
+  </div>
 
   <div class="app-container mx-auto w-full max-w-[1440px] px-4 pb-28 pt-8 sm:px-6 lg:px-8 2xl:max-w-[1600px]">
     <div class="layout-grid grid gap-5 lg:grid-cols-[220px_1fr] xl:grid-cols-[240px_1fr]">
@@ -25,7 +32,7 @@
           <button class="sidebar-btn accent" (click)="recategorizeAll()" [disabled]="recategorizing">
             {{ recategorizing ? 'AI bezig…' : 'AI herlabelen' }}
           </button>
-          <button class="sidebar-btn" *ngIf="passkeySupported" (click)="registerPasskey()" [disabled]="passkeyBusy">
+          <button class="sidebar-btn" *ngIf="passkeySupported && !passkeyEnabled" (click)="registerPasskey()" [disabled]="passkeyBusy">
             {{ passkeyBusy ? 'Face ID...' : 'Face ID activeren' }}
           </button>
           <button class="sidebar-btn ghost" (click)="logout()">Logout</button>
@@ -38,30 +45,35 @@
 
       <main class="main-column space-y-6">
         <div class="mobile-header lg:hidden">
-          <div class="mobile-brand">
-            <div class="logo-mark small">FT</div>
-            <div>
-              <p class="mobile-title">Fintrack</p>
-              <p class="mobile-subtitle">Bank & crypto overzicht</p>
+          <div class="mobile-header-top">
+            <div class="mobile-brand">
+              <div class="logo-mark small">FT</div>
+              <div>
+                <p class="mobile-title">Fintrack</p>
+                <p class="mobile-subtitle">Bank & crypto overzicht</p>
+              </div>
+            </div>
+            <div class="mobile-actions">
+              <button class="mobile-action-btn" (click)="refresh()">Sync</button>
+              <button class="mobile-action-btn" *ngIf="passkeySupported && !passkeyEnabled" (click)="registerPasskey()" [disabled]="passkeyBusy">
+                {{ passkeyBusy ? 'Face ID...' : 'Face ID' }}
+              </button>
+              <button class="mobile-action-btn ghost" (click)="logout()">Logout</button>
             </div>
           </div>
-          <div class="mobile-actions">
-            <button class="mobile-action-btn" (click)="refresh()">Sync</button>
-            <button class="mobile-action-btn" *ngIf="passkeySupported" (click)="registerPasskey()" [disabled]="passkeyBusy">
-              {{ passkeyBusy ? 'Face ID...' : 'Face ID' }}
-            </button>
-            <button class="mobile-action-btn accent" (click)="filtersCollapsed = !filtersCollapsed">
-              {{ filtersCollapsed ? 'Toon filters' : 'Verberg filters' }}
-            </button>
-            <button class="mobile-action-btn ghost" (click)="logout()">Logout</button>
+          <button class="mobile-filter-summary" *ngIf="filtersCollapsed" (click)="filtersCollapsed = false">
+            <span class="mobile-filter-label">Filters</span>
+            <span class="mobile-filter-value">{{ filterSummaryLabel }}</span>
+            <span class="mobile-filter-cta">Wijzig</span>
+          </button>
+        </div>
+
+        <section class="filter-shell" [class.filter-shell-collapsed]="filtersCollapsed" [class.filter-shell-open]="!filtersCollapsed">
+          <div class="filter-sheet-head" *ngIf="!filtersCollapsed">
+            <span class="filter-sheet-handle"></span>
+            <p class="filter-sheet-title">Filters</p>
+            <button class="filter-sheet-close" (click)="filtersCollapsed = true">Sluiten</button>
           </div>
-        </div>
-
-        <div class="status-banner" *ngIf="statusMessage">
-          {{ statusMessage }}
-        </div>
-
-        <section class="filter-shell" [class.filter-shell-collapsed]="filtersCollapsed">
           <div class="filter-header">
             <div>
               <p class="filter-eyebrow">Focus</p>
@@ -71,6 +83,9 @@
             <button type="button" class="filter-toggle" (click)="filtersCollapsed = !filtersCollapsed">
               {{ filtersCollapsed ? 'Toon filters' : 'Verberg filters' }}
             </button>
+          </div>
+          <div class="filter-summary" *ngIf="filtersCollapsed">
+            <span class="filter-summary-label">{{ filterSummaryLabel }}</span>
           </div>
 
           <div class="filter-grid" [class.is-collapsed]="filtersCollapsed">
@@ -128,6 +143,7 @@
             Voeg eerst een bankrekening toe om te filteren.
           </div>
         </section>
+        <div class="filter-scrim" *ngIf="!filtersCollapsed" (click)="filtersCollapsed = true"></div>
 
         <section *ngIf="activeSection === 'overview'" class="space-y-6">
           <div class="grid gap-6 xl:grid-cols-[2fr_1fr]">
