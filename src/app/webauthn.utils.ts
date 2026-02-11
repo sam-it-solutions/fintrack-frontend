@@ -5,16 +5,18 @@ export function isPasskeySupported(): boolean {
 }
 
 export function toPublicKeyCreationOptions(options: any): PublicKeyCredentialCreationOptions {
-  if (!options?.challenge || !options?.user?.id) {
+  const raw = normalizeOptions(options);
+  const payload = raw?.publicKey ?? raw;
+  if (!payload?.challenge || !payload?.user?.id) {
     throw new Error('Passkey data ontbreekt. Probeer opnieuw.');
   }
-  const exclude = (options.excludeCredentials || []).filter((cred: any) => !!cred?.id);
+  const exclude = (payload.excludeCredentials || []).filter((cred: any) => !!cred?.id);
   return {
-    ...options,
-    challenge: base64UrlToBuffer(options.challenge),
+    ...payload,
+    challenge: base64UrlToBuffer(payload.challenge),
     user: {
-      ...options.user,
-      id: base64UrlToBuffer(options.user.id)
+      ...payload.user,
+      id: base64UrlToBuffer(payload.user.id)
     },
     excludeCredentials: exclude.map((cred: any) => ({
       ...cred,
@@ -24,13 +26,15 @@ export function toPublicKeyCreationOptions(options: any): PublicKeyCredentialCre
 }
 
 export function toPublicKeyRequestOptions(options: any): PublicKeyCredentialRequestOptions {
-  if (!options?.challenge) {
+  const raw = normalizeOptions(options);
+  const payload = raw?.publicKey ?? raw;
+  if (!payload?.challenge) {
     throw new Error('Passkey data ontbreekt. Probeer opnieuw.');
   }
-  const allow = (options.allowCredentials || []).filter((cred: any) => !!cred?.id);
+  const allow = (payload.allowCredentials || []).filter((cred: any) => !!cred?.id);
   return {
-    ...options,
-    challenge: base64UrlToBuffer(options.challenge),
+    ...payload,
+    challenge: base64UrlToBuffer(payload.challenge),
     allowCredentials: allow.map((cred: any) => ({
       ...cred,
       id: base64UrlToBuffer(cred.id)
@@ -90,4 +94,18 @@ function bufferToBase64Url(buffer: ArrayBuffer): string {
   });
   const base64 = btoa(binary);
   return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function normalizeOptions(options: any): any {
+  if (!options) {
+    return null;
+  }
+  if (typeof options === 'string') {
+    try {
+      return JSON.parse(options);
+    } catch {
+      return null;
+    }
+  }
+  return options;
 }
