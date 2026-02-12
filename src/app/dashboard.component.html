@@ -231,7 +231,7 @@
                 </div>
               </div>
 
-              <div class="grid gap-4 sm:grid-cols-3">
+              <div class="grid gap-4 sm:grid-cols-3 overview-metrics-grid">
                 <button type="button" class="metric-card metric-action" (click)="openSpendingOverview('IN')">
                   <p class="text-xs text-slate-500">Inkomen</p>
                   <p class="mt-2 text-2xl font-semibold text-emerald-600">{{ totalIncomeMonth | number:'1.2-2' }}</p>
@@ -250,7 +250,7 @@
               </div>
 
               <div class="grid gap-4 lg:grid-cols-[1.2fr_1fr] overview-mini-panels">
-                <div class="space-y-4">
+                <div class="space-y-4 overview-panel overview-panel-trend">
                   <div class="card-surface rounded-3xl p-6 shadow-card trend-card">
                     <div class="flex items-center justify-between">
                       <div>
@@ -335,7 +335,7 @@
                   </div>
                 </div>
 
-                <div class="space-y-4">
+                <div class="space-y-4 overview-panel overview-panel-crypto">
                   <div class="card-surface rounded-3xl p-6 shadow-card">
                     <div class="flex items-center justify-between">
                       <div>
@@ -344,7 +344,7 @@
                       </div>
                       <span class="pill bg-slate-100 text-slate-600">{{ cryptoAccounts.length }}</span>
                     </div>
-                    <div class="mt-4 space-y-3" *ngIf="cryptoSnapshotAssets.length > 0; else noCryptoSnapshot">
+                    <div class="mt-4 space-y-3 crypto-snapshot-list" *ngIf="cryptoSnapshotAssets.length > 0; else noCryptoSnapshot">
                       <button type="button" class="crypto-row" *ngFor="let asset of cryptoSnapshotAssets" (click)="openCryptoDetails(asset)">
                         <div class="crypto-row-main">
                           <img class="crypto-icon" [src]="cryptoIconUrl(asset.currency)" [alt]="asset.currency" (error)="onCoinIconError($event, asset.currency)">

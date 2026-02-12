@@ -1784,6 +1784,21 @@
   .hero-metrics {
     grid-template-columns: 1fr;
   }
+
+  .overview-metrics-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 6px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .overview-metrics-grid .metric-card {
+    flex: 0 0 62%;
+    scroll-snap-align: start;
+  }
   .account-card,
   .transaction-row {
     grid-template-columns: 1fr;
@@ -1793,6 +1808,13 @@
 @media (max-width: 768px) {
   :host {
     --mobile-header-h: 64px;
+    --radius-lg: 22px;
+    --radius-md: 18px;
+    --radius-sm: 12px;
+    --pad-lg: 16px;
+    --pad-md: 12px;
+    --pad-sm: 8px;
+    --shadow-soft: 0 8px 18px rgba(15, 23, 42, 0.1);
   }
 
   .toast-host {
@@ -1812,11 +1834,11 @@
   }
 
   .layout-grid {
-    gap: 16px;
+    gap: 14px;
   }
 
   .main-column {
-    gap: 18px;
+    gap: 14px;
   }
 
   .mobile-header {
@@ -2132,12 +2154,13 @@
   }
 
   .hero-card {
-    padding: 18px;
-    border-radius: 24px;
+    padding: 16px;
+    border-radius: 22px;
+    gap: 12px;
   }
 
   .hero-card .text-4xl {
-    font-size: 28px;
+    font-size: 26px;
   }
 
   .hero-metrics {
@@ -2145,22 +2168,56 @@
   }
 
   .metric-card {
-    padding: 14px;
-    border-radius: 20px;
+    padding: 12px;
+    border-radius: 18px;
   }
 
   .card-surface {
-    padding: 18px !important;
+    padding: 14px !important;
+  }
+
+  .overview-mini-panels {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 6px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .overview-mini-panels > .overview-panel {
+    flex: 0 0 82%;
+    scroll-snap-align: start;
+  }
+
+  .overview-mini-panels .overview-panel-crypto {
+    order: 1;
+  }
+
+  .overview-mini-panels .overview-panel-trend {
+    order: 2;
+  }
+
+  .crypto-snapshot-list {
+    display: grid;
+    gap: 8px;
+    max-height: 560px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  .crypto-snapshot-list > * + * {
+    margin-top: 8px !important;
   }
 
   .transaction-row,
   .account-card,
   .crypto-asset {
-    padding: 12px;
+    padding: 10px 12px;
   }
 
   .transaction-row {
-    gap: 6px;
+    gap: 4px;
   }
 
   .trend-metrics {
@@ -2170,6 +2227,20 @@
   .crypto-row {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .crypto-row {
+    padding: 10px 12px;
+    border-radius: 16px;
+  }
+
+  .crypto-row-value {
+    font-size: 12px;
+  }
+
+  .crypto-holdings,
+  .crypto-change {
+    font-size: 11px;
   }
 
   .crypto-row-value {
@@ -2189,19 +2260,55 @@
     max-width: 520px;
     margin: 0 auto;
   }
+
+  .section-title {
+    font-size: 16px;
+  }
+
+  .section-subtitle {
+    font-size: 11px;
+  }
+
+  .hero-delta {
+    padding: 4px 10px;
+    font-size: 10px;
+  }
+
+  .hero-delta .delta-arrow {
+    font-size: 9px;
+  }
+
+  .metric-card .text-2xl {
+    font-size: 20px;
+  }
+
+  .account-card,
+  .transaction-row,
+  .audit-row {
+    border-radius: 16px;
+  }
+
+  .crypto-wallet {
+    padding: 12px;
+    border-radius: 18px;
+  }
+
+  .crypto-asset {
+    border-radius: 16px;
+  }
 }
 
 @media (max-width: 480px) {
   .hero-card {
-    padding: 16px;
+    padding: 14px;
   }
 
   .hero-card .text-4xl {
-    font-size: 24px;
+    font-size: 22px;
   }
 
   .section-title {
-    font-size: 16px;
+    font-size: 15px;
   }
 
   .filter-shell {
