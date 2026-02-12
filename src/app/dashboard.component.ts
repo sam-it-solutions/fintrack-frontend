@@ -31,7 +31,7 @@ type ToastType = 'success' | 'error' | 'info';
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   appName = 'Fintrack';
-  subtitle = 'High‑end overzicht van banken en crypto.';
+  subtitle = 'Premium overzicht van banken en crypto.';
 
   activeSection: SectionKey = 'overview';
   mobileMoreOpen = false;
@@ -118,6 +118,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   passkeySupported = isPasskeySupported();
   passkeyBusy = false;
   passkeyEnabled = false;
+  refreshing = false;
   month = new Date().toISOString().slice(0, 7);
   householdBalanceMonth = new Date().toISOString().slice(0, 7);
   includeSharedBalance = false;
@@ -229,11 +230,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   private syncPasskeyState(): void {
     const key = this.getPasskeyStorageKey();
+    const legacyEnabled = localStorage.getItem('fintrack_passkey_enabled') === '1';
     if (!key) {
-      this.passkeyEnabled = false;
+      this.passkeyEnabled = legacyEnabled;
       return;
     }
-    this.passkeyEnabled = localStorage.getItem(key) === '1';
+    this.passkeyEnabled = localStorage.getItem(key) === '1' || legacyEnabled;
   }
 
   get filterSummaryLabel(): string {
@@ -291,8 +293,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.spendingDirection = direction;
     this.spendingSelectedCategory = 'ALL';
     this.spendingTxPage = 1;
-    this.filtersCollapsed = false;
     this.setSection('spending');
+    this.filtersCollapsed = true;
+  }
+
+  openAccountSpending(account: AccountResponse, event?: Event) {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.selectedAccountIds = [account.id];
+    this.spendingDirection = 'OUT';
+    this.spendingSelectedCategory = 'ALL';
+    this.spendingTxPage = 1;
+    this.setSection('spending');
+    this.filtersCollapsed = true;
   }
 
   openCryptoDetails(asset: AccountResponse) {
@@ -416,7 +430,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   refresh() {
+    if (this.refreshing) {
+      return;
+    }
+    this.refreshing = true;
+    this.statusMessage = 'Gegevens worden vernieuwd...';
     this.loadAll();
+    setTimeout(() => {
+      this.refreshing = false;
+    }, 2400);
   }
 
   async registerPasskey() {
@@ -442,6 +464,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       if (key) {
         localStorage.setItem(key, '1');
       }
+      localStorage.setItem('fintrack_passkey_enabled', '1');
       this.passkeyEnabled = true;
       this.statusMessage = 'Face ID is geactiveerd op dit toestel.';
     } catch (err: any) {
@@ -717,8 +740,25 @@ export class DashboardComponent implements OnInit, OnDestroy {
       case 'SKIPPED':
         return 'Sync overgeslagen';
       default:
-        return 'Sync idle';
+        return 'Sync inactief';
     }
+  }
+
+  cryptoChangeLabel(asset: AccountResponse): string {
+    const change = asset.priceChange24hPct;
+    if (change === null || change === undefined || Number.isNaN(change)) {
+      return '—';
+    }
+    const sign = change >= 0 ? '+' : '';
+    return `${sign}${change.toFixed(2)}%`;
+  }
+
+  cryptoChangeClass(asset: AccountResponse): string {
+    const change = asset.priceChange24hPct;
+    if (change === null || change === undefined || Number.isNaN(change)) {
+      return 'text-slate-400';
+    }
+    return change >= 0 ? 'text-emerald-600' : 'text-rose-600';
   }
 
   syncStatusClass(status?: string) {
@@ -787,6 +827,32 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.statusMessage = err?.error?.message ?? 'Kon niet deelnemen.';
+      }
+    });
+  }
+
+  deleteHousehold(household: HouseholdResponse) {
+    if (!this.token) {
+      return;
+    }
+    if (household.role !== 'OWNER') {
+      this.statusMessage = 'Alleen de eigenaar kan een huishouden verwijderen.';
+      return;
+    }
+    const confirmed = window.confirm(`Huishouden "${household.name}" verwijderen?`);
+    if (!confirmed) {
+      return;
+    }
+    this.api.deleteHousehold(this.token, household.id).subscribe({
+      next: () => {
+        this.statusMessage = 'Huishouden verwijderd.';
+        if (this.shareHouseholdId === household.id) {
+          this.shareHouseholdId = '';
+        }
+        this.loadAll();
+      },
+      error: (err) => {
+        this.statusMessage = err?.error?.message ?? 'Huishouden verwijderen mislukt.';
       }
     });
   }

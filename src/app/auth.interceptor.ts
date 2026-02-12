@@ -11,8 +11,13 @@ export class AuthInterceptor implements HttpInterceptor {
     return next.handle(req).pipe(
       catchError((error: HttpErrorResponse) => {
         const isAuthEndpoint = req.url.includes('/api/auth/');
-        if ((error.status === 401 || error.status === 403) && !isAuthEndpoint) {
+        if (error.status === 401 && !isAuthEndpoint) {
           this.session.clear('Sessie verlopen. Log opnieuw in.');
+        } else if (error.status === 403 && !isAuthEndpoint) {
+          const message = (error.error?.message ?? error.message ?? '').toString().toLowerCase();
+          if (message.includes('token') || message.includes('expired') || message.includes('verlopen')) {
+            this.session.clear('Sessie verlopen. Log opnieuw in.');
+          }
         }
         return throwError(() => error);
       })

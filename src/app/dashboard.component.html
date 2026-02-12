@@ -14,32 +14,35 @@
         <div class="sidebar-brand">
           <div class="logo-mark small">FT</div>
           <div>
-            <p class="sidebar-eyebrow">Workspace</p>
+            <p class="sidebar-eyebrow">Werkruimte</p>
             <p class="sidebar-title">Fintrack</p>
           </div>
         </div>
         <div class="sidebar-nav">
-          <button class="sidebar-link" [class.active]="activeSection === 'overview'" (click)="setSection('overview')">Overview</button>
-          <button class="sidebar-link" [class.active]="activeSection === 'accounts'" (click)="setSection('accounts')">Accounts</button>
-          <button class="sidebar-link" [class.active]="activeSection === 'spending'" (click)="setSection('spending')">Spending</button>
-          <button class="sidebar-link" [class.active]="activeSection === 'transactions'" (click)="setSection('transactions')">Transactions</button>
-          <button class="sidebar-link" [class.active]="activeSection === 'audit'" (click)="setSection('audit')">AI Audit</button>
-          <button class="sidebar-link" [class.active]="activeSection === 'household'" (click)="setSection('household')">Household</button>
-          <button class="sidebar-link" [class.active]="activeSection === 'connections'" (click)="setSection('connections')">Connections</button>
+          <button class="sidebar-link" [class.active]="activeSection === 'overview'" (click)="setSection('overview')">Overzicht</button>
+          <button class="sidebar-link" [class.active]="activeSection === 'accounts'" (click)="setSection('accounts')">Rekeningen</button>
+          <button class="sidebar-link" [class.active]="activeSection === 'spending'" (click)="setSection('spending')">Uitgaven</button>
+          <button class="sidebar-link" [class.active]="activeSection === 'transactions'" (click)="setSection('transactions')">Transacties</button>
+          <button class="sidebar-link" [class.active]="activeSection === 'audit'" (click)="setSection('audit')">AI audit</button>
+          <button class="sidebar-link" [class.active]="activeSection === 'household'" (click)="setSection('household')">Huishouden</button>
+          <button class="sidebar-link" [class.active]="activeSection === 'connections'" (click)="setSection('connections')">Koppelingen</button>
           <button class="sidebar-link" [class.active]="activeSection === 'admin'" (click)="setSection('admin')">Instellingen</button>
         </div>
         <div class="sidebar-actions">
-          <button class="sidebar-btn" (click)="refresh()">Sync</button>
+          <button class="sidebar-btn" (click)="refresh()" [class.is-loading]="refreshing" [disabled]="refreshing">
+            <span class="btn-spinner" *ngIf="refreshing"></span>
+            <span>{{ refreshing ? 'Bezig...' : 'Synchroniseren' }}</span>
+          </button>
           <button class="sidebar-btn accent" (click)="recategorizeAll()" [disabled]="recategorizing">
             {{ recategorizing ? 'AI bezig…' : 'AI herlabelen' }}
           </button>
           <button class="sidebar-btn" *ngIf="passkeySupported && !passkeyEnabled" (click)="registerPasskey()" [disabled]="passkeyBusy">
             {{ passkeyBusy ? 'Face ID...' : 'Face ID activeren' }}
           </button>
-          <button class="sidebar-btn ghost" (click)="logout()">Logout</button>
+          <button class="sidebar-btn ghost" (click)="logout()">Uitloggen</button>
         </div>
         <div class="sidebar-card">
-          <p class="sidebar-card-title">Focus month</p>
+          <p class="sidebar-card-title">Focus maand</p>
           <p class="sidebar-card-text">Filters bepalen je cashflow en transacties.</p>
         </div>
       </aside>
@@ -55,20 +58,21 @@
               </div>
             </div>
             <div class="mobile-actions">
-              <button class="mobile-action-btn icon" (click)="refresh()" aria-label="Sync">
-                <svg viewBox="0 0 24 24" class="h-4 w-4" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <button class="mobile-action-btn icon" (click)="refresh()" aria-label="Synchroniseren" [class.is-loading]="refreshing" [disabled]="refreshing">
+                <span class="btn-spinner" *ngIf="refreshing"></span>
+                <svg *ngIf="!refreshing" viewBox="0 0 24 24" class="h-4 w-4" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M4 4v6h6"/>
                   <path d="M20 20v-6h-6"/>
                   <path d="M5.5 9a7 7 0 0 1 11.45-2.63L20 8"/>
                   <path d="M18.5 15a7 7 0 0 1-11.45 2.63L4 16"/>
                 </svg>
-                <span>Sync</span>
+                <span>{{ refreshing ? 'Bezig' : 'Sync' }}</span>
               </button>
               <button class="mobile-action-btn" *ngIf="passkeySupported && !passkeyEnabled" (click)="registerPasskey()" [disabled]="passkeyBusy">
                 {{ passkeyBusy ? 'Face ID...' : 'Face ID' }}
               </button>
               <span class="mobile-action-chip" *ngIf="passkeySupported && passkeyEnabled">Face ID actief</span>
-              <button class="mobile-action-btn ghost" (click)="logout()">Logout</button>
+              <button class="mobile-action-btn ghost" (click)="logout()">Uitloggen</button>
             </div>
           </div>
           <button class="mobile-filter-summary" *ngIf="filtersCollapsed" (click)="filtersCollapsed = false">
@@ -124,7 +128,7 @@
                 </select>
               </div>
               <div class="filter-field">
-                <label class="filter-label">Accounts</label>
+                <label class="filter-label">Rekeningen</label>
                 <button class="filter-reset" (click)="clearAccountFilter()">Alle rekeningen</button>
               </div>
             </div>
@@ -161,7 +165,7 @@
               <div class="hero-card">
                 <div class="hero-head">
                   <div>
-                    <p class="text-xs uppercase tracking-[0.3em] text-slate-200">Net worth</p>
+                    <p class="text-xs uppercase tracking-[0.3em] text-slate-200">Netto waarde</p>
                     <div class="mt-3 text-4xl font-semibold text-white">{{ netWorthEur | number:'1.2-2' }} EUR</div>
                     <p class="mt-2 text-sm text-slate-300">Bank (EUR) + crypto (EUR)</p>
                   </div>
@@ -239,7 +243,7 @@
                   <div class="card-surface rounded-3xl p-6 shadow-card trend-card">
                     <div class="flex items-center justify-between">
                       <div>
-                        <h2 class="section-title">Net worth trend</h2>
+                        <h2 class="section-title">Netto waarde trend</h2>
                         <p class="section-subtitle">Indicatief · laatste 30 dagen</p>
                       </div>
                       <span class="pill bg-slate-100 text-slate-600">30d</span>
@@ -277,7 +281,7 @@
                         <p class="text-sm font-semibold text-slate-900">{{ netWorthEur | number:'1.2-2' }} EUR</p>
                       </div>
                       <div>
-                        <p class="text-xs text-slate-500">Change</p>
+                        <p class="text-xs text-slate-500">Wijziging</p>
                         <p class="text-sm font-semibold text-slate-900">{{ netWorthTrendDeltaPct | number:'1.1-1' }}%</p>
                       </div>
                     </div>
@@ -289,7 +293,7 @@
                         <h2 class="section-title">Uitgaven trend</h2>
                         <p class="section-subtitle">Laatste 14 dagen</p>
                       </div>
-                      <span class="pill bg-slate-100 text-slate-600">Live</span>
+                      <span class="pill bg-slate-100 text-slate-600">Actueel</span>
                     </div>
                     <div class="mt-4 trend-chart trend-chart-alt">
                       <svg viewBox="0 0 240 90" class="w-full trend-svg" aria-hidden="true">
@@ -324,8 +328,8 @@
                   <div class="card-surface rounded-3xl p-6 shadow-card">
                     <div class="flex items-center justify-between">
                       <div>
-                        <h2 class="section-title">Crypto snapshot</h2>
-                        <p class="section-subtitle">Top assets</p>
+                        <h2 class="section-title">Crypto overzicht</h2>
+                        <p class="section-subtitle">Top munten</p>
                       </div>
                       <span class="pill bg-slate-100 text-slate-600">{{ cryptoAccounts.length }}</span>
                     </div>
@@ -347,6 +351,7 @@
                             <span class="crypto-currency">EUR</span>
                           </div>
                           <div class="crypto-holdings">{{ asset.currentBalance | number:'1.4-4' }} {{ asset.currency }}</div>
+                          <div class="crypto-change" [ngClass]="cryptoChangeClass(asset)">{{ cryptoChangeLabel(asset) }} 24u</div>
                         </div>
                       </button>
                     </div>
@@ -412,7 +417,7 @@
               <div class="card-surface rounded-3xl p-6 shadow-card">
                 <div class="flex items-center justify-between">
                   <div>
-                    <h2 class="section-title">Top merchants</h2>
+                    <h2 class="section-title">Top winkels</h2>
                     <p class="section-subtitle">Hoogste uitgaven</p>
                   </div>
                   <span class="pill bg-slate-100 text-slate-600">{{ topMerchants.length }}</span>
@@ -431,7 +436,7 @@
               </div>
 
               <div class="card-surface rounded-3xl p-6 shadow-card">
-                <h2 class="section-title">Highlights</h2>
+                <h2 class="section-title">Hoogtepunten</h2>
                 <div class="mt-4 space-y-3 text-sm text-slate-600">
                   <p>Grootste uitgave: <strong class="text-slate-900">{{ largestExpense?.description || 'N.v.t.' }}</strong></p>
                   <p>Laatste sync: <strong class="text-slate-900">{{ summary?.updatedAt || 'Onbekend' }}</strong></p>
@@ -448,13 +453,13 @@
               <div class="card-surface rounded-3xl p-6 shadow-card">
                 <div class="flex items-center justify-between">
                   <div>
-                    <h2 class="section-title">Bank accounts</h2>
+                    <h2 class="section-title">Bankrekeningen</h2>
                     <p class="section-subtitle">Inclusief handmatige rekeningen</p>
                   </div>
-                  <span class="pill bg-slate-100 text-slate-600">{{ bankAccounts.length }} accounts</span>
+                  <span class="pill bg-slate-100 text-slate-600">{{ bankAccounts.length }} rekeningen</span>
                 </div>
                 <div class="mt-4 space-y-3">
-                  <div class="account-card" *ngFor="let a of bankAccounts">
+                  <div class="account-card account-card-clickable" *ngFor="let a of bankAccounts" (click)="openAccountSpending(a)">
                     <div>
                       <p class="text-sm font-semibold text-slate-900">{{ accountDisplayName(a) }}</p>
                       <p class="text-xs text-slate-500">{{ a.provider }} · {{ a.currency }}</p>
@@ -464,12 +469,12 @@
                       <p class="text-sm font-semibold text-slate-900">{{ a.currentBalance | number:'1.2-2' }} {{ a.currency }}</p>
                       <p class="text-xs text-slate-400" *ngIf="a.lastSyncedAt">{{ a.lastSyncedAt | date:'short' }}</p>
                     </div>
-                    <div class="account-actions">
+                    <div class="account-actions" (click)="$event.stopPropagation()">
                       <button class="pill bg-slate-100 text-slate-600" *ngIf="editingAccountId !== a.id" (click)="startEditLabel(a)">Naam aanpassen</button>
                       <button class="pill bg-rose-50 text-rose-600" *ngIf="isManualAccount(a)" (click)="deleteManualAccount(a)">Verwijder</button>
-                      <button class="pill bg-slate-100 text-slate-600" *ngIf="!isManualAccount(a)" (click)="shareAccount(a)">Deel met household</button>
+                      <button class="pill bg-slate-100 text-slate-600" *ngIf="!isManualAccount(a)" (click)="shareAccount(a)">Deel met huishouden</button>
                     </div>
-                    <div class="account-edit" *ngIf="editingAccountId === a.id">
+                    <div class="account-edit" *ngIf="editingAccountId === a.id" (click)="$event.stopPropagation()">
                       <input class="filter-input" [(ngModel)]="labelDrafts[a.id]" placeholder="Accountnaam">
                       <div class="mt-2 flex gap-2">
                         <button class="pill bg-navy-900 text-white" (click)="saveAccountLabel(a)">Opslaan</button>
@@ -483,7 +488,7 @@
               <div class="card-surface rounded-3xl p-6 shadow-card">
                 <div class="flex items-center justify-between">
                   <div>
-                    <h2 class="section-title">Crypto wallets</h2>
+                    <h2 class="section-title">Cryptowallets</h2>
                     <p class="section-subtitle">Samengevoegd per wallet</p>
                   </div>
                   <span class="pill bg-slate-100 text-slate-600">{{ cryptoWallets.length }} wallets</span>
@@ -512,6 +517,7 @@
                         <div class="text-right">
                           <p class="text-xs font-semibold text-slate-900">{{ asset.currentBalance | number:'1.4-4' }}</p>
                           <p class="text-[10px] text-slate-500">≈ {{ asset.currentFiatValue | number:'1.2-2' }} EUR</p>
+                          <p class="text-[10px]" [ngClass]="cryptoChangeClass(asset)">{{ cryptoChangeLabel(asset) }} 24u</p>
                         </div>
                       </button>
                     </div>
@@ -536,7 +542,7 @@
               </div>
 
               <div class="card-surface rounded-3xl p-6 shadow-card">
-                <h2 class="section-title">Net worth breakdown</h2>
+                <h2 class="section-title">Netto waarde verdeling</h2>
                 <div class="mt-4 space-y-3 text-sm">
                   <div class="flex items-center justify-between">
                     <span class="text-slate-500">Bank</span>
@@ -547,7 +553,7 @@
                     <span class="font-semibold text-slate-900">{{ cryptoFiatTotal | number:'1.2-2' }} EUR</span>
                   </div>
                   <div class="flex items-center justify-between border-t border-slate-200 pt-3">
-                    <span class="text-slate-500">Total</span>
+                    <span class="text-slate-500">Totaal</span>
                     <span class="font-semibold text-slate-900">{{ netWorthEur | number:'1.2-2' }} EUR</span>
                   </div>
                 </div>
@@ -559,7 +565,7 @@
         <section *ngIf="activeSection === 'spending'" class="space-y-6" style="margin-top: 0px;">
           <div class="spending-header">
             <div>
-              <h2 class="section-title">Spending overzicht</h2>
+              <h2 class="section-title">Uitgaven overzicht</h2>
               <p class="section-subtitle">Bekijk uitgaven en inkomsten per categorie.</p>
             </div>
             <div class="pill-group">
@@ -639,7 +645,7 @@
                 </div>
                 <div class="flex items-center gap-2">
                   <span class="pill bg-slate-100 text-slate-600">{{ spendingSelectedTotal | number:'1.2-2' }} {{ primaryCurrency }}</span>
-                  <button class="pill bg-slate-100 text-slate-600" *ngIf="spendingSelectedCategory !== 'ALL'" (click)="clearSpendingCategory()">Reset</button>
+                  <button class="pill bg-slate-100 text-slate-600" *ngIf="spendingSelectedCategory !== 'ALL'" (click)="clearSpendingCategory()">Wissen</button>
                 </div>
               </div>
               <div class="mt-4 space-y-3">
@@ -762,7 +768,7 @@
             <div class="card-surface rounded-3xl p-6 shadow-card">
               <div class="flex items-center justify-between">
                 <div>
-                  <h2 class="section-title">Top merchants</h2>
+                  <h2 class="section-title">Top winkels</h2>
                   <p class="section-subtitle">Grootste uitgaven</p>
                 </div>
               </div>
@@ -994,7 +1000,7 @@
           <div class="card-surface rounded-3xl p-6 shadow-card">
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 class="section-title">Household balancing</h2>
+                <h2 class="section-title">Huishoudbalans</h2>
                 <p class="section-subtitle">Wie moet wie terugbetalen</p>
               </div>
               <button class="pill bg-slate-100 text-slate-600" (click)="loadHouseholdBalance()">Vernieuwen</button>
@@ -1005,11 +1011,11 @@
                 <input class="filter-input" type="month" [(ngModel)]="householdBalanceMonth" (change)="loadHouseholdBalance()">
               </label>
               <label class="goal-field goal-field-inline">
-                <span>Include shared</span>
+                <span>Gezamenlijk meenemen</span>
                 <input type="checkbox" [(ngModel)]="includeSharedBalance" (change)="loadHouseholdBalance()">
               </label>
               <label class="goal-field">
-                <span>Household</span>
+                <span>Huishouden</span>
                 <select class="filter-input" [(ngModel)]="shareHouseholdId" (change)="loadHouseholdBalance()">
                   <option *ngFor="let h of households" [value]="h.id">{{ h.name }} ({{ h.role }})</option>
                 </select>
@@ -1030,7 +1036,7 @@
               <div class="metric-card">
                 <p class="text-xs text-slate-500">Leden</p>
                 <p class="mt-2 text-xl font-semibold text-slate-900">{{ householdBalance.members.length }}</p>
-                <p class="text-xs text-slate-400">members</p>
+                <p class="text-xs text-slate-400">leden</p>
               </div>
             </div>
 
@@ -1065,14 +1071,14 @@
             </div>
 
             <div class="text-xs text-slate-500" *ngIf="!householdBalance">
-              Selecteer een household om de balans te zien.
+              Selecteer een huishouden om de balans te zien.
             </div>
           </div>
 
           <div class="card-surface rounded-3xl p-6 shadow-card">
             <div class="flex items-center justify-between">
               <div>
-                <h2 class="section-title">Household beheer</h2>
+                <h2 class="section-title">Huishouden beheer</h2>
                 <p class="section-subtitle">Gezamenlijke uitgaven</p>
               </div>
             </div>
@@ -1083,17 +1089,17 @@
                   <option *ngFor="let h of households" [value]="h.id">{{ h.name }} ({{ h.role }})</option>
                 </select>
                 <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <p class="text-xs font-semibold text-slate-500">Nieuwe household</p>
+                  <p class="text-xs font-semibold text-slate-500">Nieuw huishouden</p>
                   <div class="mt-3 flex gap-2">
                     <input class="filter-input" [(ngModel)]="householdName" placeholder="Bijv. Poelmans">
                     <button class="pill bg-navy-900 text-white" (click)="createHousehold()">Aanmaken</button>
                   </div>
                 </div>
                 <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <p class="text-xs font-semibold text-slate-500">Deelname via invite</p>
+                  <p class="text-xs font-semibold text-slate-500">Deelnemen via uitnodiging</p>
                   <div class="mt-3 flex gap-2">
-                    <input class="filter-input" [(ngModel)]="householdInvite" placeholder="Invite code">
-                    <button class="pill bg-slate-100 text-slate-600" (click)="joinHousehold()">Join</button>
+                    <input class="filter-input" [(ngModel)]="householdInvite" placeholder="Uitnodigingscode">
+                    <button class="pill bg-slate-100 text-slate-600" (click)="joinHousehold()">Deelnemen</button>
                   </div>
                 </div>
               </div>
@@ -1102,9 +1108,12 @@
                   <div class="flex items-center justify-between">
                     <div>
                       <h3 class="text-sm font-semibold">{{ h.name }}</h3>
-                      <p class="text-xs text-slate-500">Invite: {{ h.inviteCode }}</p>
+                      <p class="text-xs text-slate-500">Code: {{ h.inviteCode }}</p>
                     </div>
-                    <span class="pill bg-navy-100 text-navy-700">{{ h.role }}</span>
+                    <div class="flex items-center gap-2">
+                      <span class="pill bg-navy-100 text-navy-700">{{ h.role }}</span>
+                      <button class="pill bg-rose-50 text-rose-600" *ngIf="h.role === 'OWNER'" (click)="deleteHousehold(h)">Verwijderen</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1312,12 +1321,16 @@
           <p class="text-sm font-semibold text-slate-900">{{ asset.currentFiatValue | number:'1.2-2' }} EUR</p>
         </div>
         <div class="crypto-stat">
-          <p class="text-[11px] text-slate-500">Holdings</p>
+          <p class="text-[11px] text-slate-500">Aantal</p>
           <p class="text-sm font-semibold text-slate-900">{{ asset.currentBalance | number:'1.4-4' }} {{ asset.currency }}</p>
         </div>
         <div class="crypto-stat">
-          <p class="text-[11px] text-slate-500">Prijs / coin</p>
+          <p class="text-[11px] text-slate-500">Prijs per coin</p>
           <p class="text-sm font-semibold text-slate-900">{{ cryptoUnitPrice(asset) | number:'1.2-6' }} EUR</p>
+        </div>
+        <div class="crypto-stat">
+          <p class="text-[11px] text-slate-500">24u verandering</p>
+          <p class="text-sm font-semibold" [ngClass]="cryptoChangeClass(asset)">{{ cryptoChangeLabel(asset) }}</p>
         </div>
       </div>
 
@@ -1352,7 +1365,7 @@
     <div class="ios-bar">
       <button class="ios-tab" [class.ios-tab-active]="activeSection === 'overview'" (click)="setSection('overview')">
         <svg viewBox="0 0 24 24" class="h-6 w-6" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5v8a1 1 0 0 1-1 1h-5.5v-5.5h-3V20H5a1 1 0 0 1-1-1z" fill="currentColor"/></svg>
-        <span>Home</span>
+        <span>Start</span>
       </button>
       <button class="ios-tab" [class.ios-tab-active]="activeSection === 'accounts'" (click)="setSection('accounts')">
         <svg viewBox="0 0 24 24" class="h-6 w-6" aria-hidden="true"><path d="M4 6h16a2 2 0 0 1 2 2v2H2V8a2 2 0 0 1 2-2zm-2 8h20v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z" fill="currentColor"/></svg>
@@ -1389,19 +1402,19 @@
           <span class="text-xs text-slate-500">Sync & AI beheer</span>
         </button>
         <button class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold" (click)="setSection('audit')">
-          <span>AI Audit</span>
+          <span>AI audit</span>
           <span class="text-xs text-slate-500">Zekerheid & redenen</span>
         </button>
         <button class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold" (click)="setSection('household')">
-          <span>Household</span>
+          <span>Huishouden</span>
           <span class="text-xs text-slate-500">Gezamenlijk</span>
         </button>
         <button class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold" (click)="setSection('connections')">
-          <span>Connections</span>
+          <span>Koppelingen</span>
           <span class="text-xs text-slate-500">Bank & crypto</span>
         </button>
         <button class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-rose-600" (click)="logout(); closeMobileMore()">
-          <span>Logout</span>
+          <span>Uitloggen</span>
           <span class="text-xs text-rose-400">Sessies wissen</span>
         </button>
       </div>

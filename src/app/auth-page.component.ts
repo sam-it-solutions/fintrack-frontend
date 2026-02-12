@@ -71,6 +71,7 @@ export class AuthPageComponent {
       const payload = serializeAssertionCredential(credential);
       const result = await firstValueFrom(this.api.passkeyLoginFinish(start.challengeId, payload));
       this.session.setToken(result.token);
+      this.markPasskeyEnabled(result.token);
       this.statusMessage = 'Welkom terug!';
     } catch (err: any) {
       if (err?.status === 401 || err?.status === 403) {
@@ -80,6 +81,18 @@ export class AuthPageComponent {
       }
     } finally {
       this.passkeyBusy = false;
+    }
+  }
+
+  private markPasskeyEnabled(token: string) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1] ?? ''));
+      const subject = payload?.sub ?? payload?.email;
+      const key = subject ? `fintrack_passkey_${subject}` : 'fintrack_passkey_enabled';
+      localStorage.setItem(key, '1');
+      localStorage.setItem('fintrack_passkey_enabled', '1');
+    } catch {
+      localStorage.setItem('fintrack_passkey_enabled', '1');
     }
   }
 }

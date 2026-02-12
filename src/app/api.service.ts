@@ -70,6 +70,7 @@ export interface AccountResponse {
   currentFiatValue?: number;
   fiatCurrency?: string;
   lastSyncedAt?: string;
+  priceChange24hPct?: number;
 }
 
 export interface SummaryResponse {
@@ -382,6 +383,10 @@ export class ApiService {
 
   joinHousehold(token: string, inviteCode: string): Observable<HouseholdResponse> {
     return this.http.post<HouseholdResponse>(`${this.baseUrl}/api/households/join`, { inviteCode }, this.authHeaders(token));
+  }
+
+  deleteHousehold(token: string, householdId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/api/households/${householdId}`, this.authHeaders(token));
   }
 
   private authHeaders(token: string) {

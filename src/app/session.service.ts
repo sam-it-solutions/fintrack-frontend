@@ -51,10 +51,6 @@ export class SessionService {
     if (!token) {
       return;
     }
-    if (this.isTokenExpired(token)) {
-      this.clear('Sessie verlopen. Log opnieuw in.');
-      return;
-    }
     this.scheduleExpiry(token);
   }
 
@@ -69,17 +65,11 @@ export class SessionService {
     }
     const ms = expiry - Date.now();
     if (ms <= 0) {
-      this.clear('Sessie verlopen. Log opnieuw in.');
       return;
     }
     this.logoutTimer = setTimeout(() => {
       this.clear('Sessie verlopen. Log opnieuw in.');
     }, ms);
-  }
-
-  private isTokenExpired(token: string): boolean {
-    const expiry = this.getTokenExpiry(token);
-    return expiry !== null && expiry <= Date.now();
   }
 
   private getTokenExpiry(token: string): number | null {

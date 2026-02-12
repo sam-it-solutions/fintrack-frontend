@@ -14,7 +14,7 @@
 
     <div class="auth-grid">
       <section class="auth-hero">
-        <div class="hero-chip">Private overview</div>
+        <div class="hero-chip">Privé overzicht</div>
         <h2 class="hero-title">Rust, overzicht en zekerheid in één cockpit.</h2>
         <p class="hero-text">
           Beheer banken, crypto en huishoudbudgetten in één strak overzicht.
@@ -30,8 +30,8 @@
             <p class="metric-value">Bitvavo</p>
           </div>
           <div class="metric-card">
-            <p class="metric-label">Household</p>
-            <p class="metric-value">Shared spend</p>
+            <p class="metric-label">Huishouden</p>
+            <p class="metric-value">Gezamenlijke uitgaven</p>
           </div>
         </div>
         <ul class="hero-list">
@@ -43,7 +43,7 @@
 
       <section class="auth-card">
         <div class="auth-toggle">
-          <button class="toggle-btn" [class.active]="mode === 'login'" (click)="switchMode('login')">Login</button>
+          <button class="toggle-btn" [class.active]="mode === 'login'" (click)="switchMode('login')">Inloggen</button>
           <button class="toggle-btn" [class.active]="mode === 'register'" (click)="switchMode('register')">Account maken</button>
         </div>
 
@@ -52,8 +52,8 @@
 
         <div class="auth-form">
           <div class="form-field">
-            <label>Email</label>
-            <input type="email" [(ngModel)]="email" placeholder="jij@example.com">
+            <label>E-mail</label>
+            <input type="email" [(ngModel)]="email" placeholder="jij@voorbeeld.com">
           </div>
           <div class="form-field">
             <label>Wachtwoord</label>
@@ -67,7 +67,7 @@
           <button *ngIf="mode === 'login' && passkeySupported" class="secondary-btn" (click)="loginWithPasskey()" [disabled]="passkeyBusy">
             {{ passkeyBusy ? 'Face ID...' : 'Inloggen met Face ID' }}
           </button>
-          <p class="hint-text" *ngIf="mode === 'login' && passkeySupported">Gebruik Face ID of Touch ID. Email is niet nodig als je passkey al is ingesteld.</p>
+          <p class="hint-text" *ngIf="mode === 'login' && passkeySupported">Gebruik Face ID of Touch ID. E-mail is niet nodig als je passkey al is ingesteld.</p>
           <p class="status-text" *ngIf="statusMessage">{{ statusMessage }}</p>
         </div>
       </section>
@@ -76,8 +76,8 @@
     <footer class="auth-footer">
       <span>© 2026 Sam IT Solutions</span>
       <div class="footer-links">
-        <a routerLink="/privacy">Privacy Policy</a>
-        <a routerLink="/terms">Terms of Service</a>
+        <a routerLink="/privacy">Privacybeleid</a>
+        <a routerLink="/terms">Algemene voorwaarden</a>
       </div>
     </footer>
   </div>
