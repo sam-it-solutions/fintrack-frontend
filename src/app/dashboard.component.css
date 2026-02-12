@@ -177,6 +177,12 @@
   white-space: nowrap;
 }
 
+.mobile-action-btn.icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .mobile-action-btn.accent {
   background: linear-gradient(135deg, #e3c579, #c48a26);
   color: #2a1b07;
@@ -2036,6 +2042,10 @@
   .mobile-action-btn {
     padding: 5px 8px;
     font-size: 9px;
+  }
+
+  .mobile-action-btn.icon span {
+    display: none;
   }
 
   .mobile-action-chip {

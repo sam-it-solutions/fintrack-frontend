@@ -55,7 +55,15 @@
               </div>
             </div>
             <div class="mobile-actions">
-              <button class="mobile-action-btn" (click)="refresh()">Sync</button>
+              <button class="mobile-action-btn icon" (click)="refresh()" aria-label="Sync">
+                <svg viewBox="0 0 24 24" class="h-4 w-4" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 4v6h6"/>
+                  <path d="M20 20v-6h-6"/>
+                  <path d="M5.5 9a7 7 0 0 1 11.45-2.63L20 8"/>
+                  <path d="M18.5 15a7 7 0 0 1-11.45 2.63L4 16"/>
+                </svg>
+                <span>Sync</span>
+              </button>
               <button class="mobile-action-btn" *ngIf="passkeySupported && !passkeyEnabled" (click)="registerPasskey()" [disabled]="passkeyBusy">
                 {{ passkeyBusy ? 'Face ID...' : 'Face ID' }}
               </button>

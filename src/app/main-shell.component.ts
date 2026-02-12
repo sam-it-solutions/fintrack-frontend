@@ -9,5 +9,7 @@ import { SessionService } from './session.service';
 export class MainShellComponent {
   token$ = this.session.token$;
 
-  constructor(private session: SessionService) {}
+  constructor(private session: SessionService) {
+    this.session.initialize();
+  }
 }

@@ -23,6 +23,13 @@ export class AuthPageComponent {
 
   constructor(private api: ApiService, private session: SessionService) {}
 
+  ngOnInit(): void {
+    const notice = this.session.consumeNotice();
+    if (notice) {
+      this.statusMessage = notice;
+    }
+  }
+
   switchMode(mode: 'login' | 'register') {
     this.mode = mode;
     this.statusMessage = '';
