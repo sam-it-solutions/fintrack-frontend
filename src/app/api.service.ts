@@ -177,6 +177,7 @@ export interface TransactionResponse {
 export interface AdminSettingsResponse {
   syncEnabled: boolean;
   syncIntervalMs: number;
+  cryptoSyncIntervalMs?: number;
   aiEnabled: boolean;
   aiModel?: string;
   updatedAt?: string;
@@ -185,6 +186,7 @@ export interface AdminSettingsResponse {
 export interface AdminSettingsRequest {
   syncEnabled?: boolean;
   syncIntervalMs?: number;
+  cryptoSyncIntervalMs?: number;
   aiEnabled?: boolean;
   aiModel?: string | null;
 }

@@ -129,11 +129,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   adminSettingsDraft: AdminSettingsRequest = {
     syncEnabled: true,
     syncIntervalMs: 21600000,
+    cryptoSyncIntervalMs: 3600000,
     aiEnabled: true,
     aiModel: ''
   };
   adminSaving = false;
   readonly syncIntervalOptions = [
+    { label: 'Elke 5 min', value: 5 * 60 * 1000 },
     { label: 'Elke 15 min', value: 15 * 60 * 1000 },
     { label: 'Elke 30 min', value: 30 * 60 * 1000 },
     { label: 'Elke 1 uur', value: 60 * 60 * 1000 },
@@ -141,6 +143,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
     { label: 'Elke 6 uur', value: 6 * 60 * 60 * 1000 },
     { label: 'Elke 12 uur', value: 12 * 60 * 60 * 1000 },
     { label: 'Elke 24 uur', value: 24 * 60 * 60 * 1000 }
+  ];
+  readonly cryptoSyncIntervalOptions = [
+    { label: 'Elke 5 min', value: 5 * 60 * 1000 },
+    { label: 'Elke 10 min', value: 10 * 60 * 1000 },
+    { label: 'Elke 15 min', value: 15 * 60 * 1000 },
+    { label: 'Elke 30 min', value: 30 * 60 * 1000 },
+    { label: 'Elke 1 uur', value: 60 * 60 * 1000 },
+    { label: 'Elke 3 uur', value: 3 * 60 * 60 * 1000 },
+    { label: 'Elke 6 uur', value: 6 * 60 * 60 * 1000 },
+    { label: 'Elke 12 uur', value: 12 * 60 * 60 * 1000 }
   ];
 
   ruleMatchType = 'MERCHANT';
@@ -561,6 +573,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.adminSettingsDraft = {
           syncEnabled: settings.syncEnabled,
           syncIntervalMs: settings.syncIntervalMs,
+          cryptoSyncIntervalMs: settings.cryptoSyncIntervalMs ?? this.adminSettingsDraft.cryptoSyncIntervalMs,
           aiEnabled: settings.aiEnabled,
           aiModel: settings.aiModel ?? ''
         };
@@ -579,6 +592,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const payload: AdminSettingsRequest = {
       syncEnabled: this.adminSettingsDraft.syncEnabled ?? true,
       syncIntervalMs: Number(this.adminSettingsDraft.syncIntervalMs ?? 21600000),
+      cryptoSyncIntervalMs: Number(this.adminSettingsDraft.cryptoSyncIntervalMs ?? 3600000),
       aiEnabled: this.adminSettingsDraft.aiEnabled ?? true,
       aiModel: (this.adminSettingsDraft.aiModel ?? '').trim() || null
     };
@@ -588,6 +602,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.adminSettingsDraft = {
           syncEnabled: settings.syncEnabled,
           syncIntervalMs: settings.syncIntervalMs,
+          cryptoSyncIntervalMs: settings.cryptoSyncIntervalMs ?? this.adminSettingsDraft.cryptoSyncIntervalMs,
           aiEnabled: settings.aiEnabled,
           aiModel: settings.aiModel ?? ''
         };
