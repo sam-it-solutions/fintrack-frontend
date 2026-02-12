@@ -389,6 +389,13 @@ export class ApiService {
     return this.http.delete<void>(`${this.baseUrl}/api/households/${householdId}`, this.authHeaders(token));
   }
 
+  removeHouseholdMember(token: string, householdId: string, memberId: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.baseUrl}/api/households/${householdId}/members/${memberId}`,
+      this.authHeaders(token)
+    );
+  }
+
   private authHeaders(token: string) {
     return {
       headers: new HttpHeaders({

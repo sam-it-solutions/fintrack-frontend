@@ -473,6 +473,10 @@
   animation: fintrack-spin 0.8s linear infinite;
 }
 
+.sync-icon.is-spinning {
+  animation: fintrack-spin 0.9s linear infinite;
+}
+
 @keyframes fintrack-spin {
   to {
     transform: rotate(360deg);

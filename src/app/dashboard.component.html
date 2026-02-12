@@ -59,8 +59,7 @@
             </div>
             <div class="mobile-actions">
               <button class="mobile-action-btn icon" (click)="refresh()" aria-label="Synchroniseren" [class.is-loading]="refreshing" [disabled]="refreshing">
-                <span class="btn-spinner" *ngIf="refreshing"></span>
-                <svg *ngIf="!refreshing" viewBox="0 0 24 24" class="h-4 w-4" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" class="h-4 w-4 sync-icon" [class.is-spinning]="refreshing" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M4 4v6h6"/>
                   <path d="M20 20v-6h-6"/>
                   <path d="M5.5 9a7 7 0 0 1 11.45-2.63L20 8"/>
@@ -1050,6 +1049,12 @@
                   <p class="text-sm font-semibold" [class.text-emerald-600]="member.balance > 0" [class.text-rose-600]="member.balance < 0">
                     {{ member.balance | number:'1.2-2' }} EUR
                   </p>
+                  <button
+                    class="pill mt-2 bg-rose-50 text-rose-600"
+                    *ngIf="isHouseholdOwner && currentUserId && member.userId !== currentUserId"
+                    (click)="removeHouseholdMember(member)">
+                    Verwijder
+                  </button>
                 </div>
               </div>
 

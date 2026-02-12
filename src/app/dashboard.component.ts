@@ -12,6 +12,7 @@ import {
   RecurringPaymentResponse,
   EnableBankingAspspResponse,
   HouseholdResponse,
+  HouseholdBalanceMember,
   HouseholdBalanceResponse,
   SpendingCategorySummary,
   AdminSettingsResponse,
@@ -47,6 +48,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   recurring: RecurringPaymentResponse[] = [];
   householdBalance: HouseholdBalanceResponse | null = null;
   selectedAccountIds: string[] = [];
+  private accountFilterEphemeral = false;
   labelDrafts: Record<string, string> = {};
   editingAccountId: string | null = null;
   editingCategoryId: string | null = null;
@@ -202,6 +204,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return this.session.token;
   }
 
+  get currentUserId(): string | null {
+    const token = this.token;
+    if (!token) {
+      return null;
+    }
+    const payload = this.decodeJwtPayload(token);
+    if (!payload) {
+      return null;
+    }
+    return payload.sub ?? payload.userId ?? null;
+  }
+
+  get selectedHouseholdRole(): string | null {
+    if (!this.shareHouseholdId) {
+      return null;
+    }
+    return this.households.find((h) => h.id === this.shareHouseholdId)?.role ?? null;
+  }
+
+  get isHouseholdOwner(): boolean {
+    return this.selectedHouseholdRole === 'OWNER';
+  }
+
   get statusMessage(): string {
     return this._statusMessage;
   }
@@ -212,6 +237,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
     this.pushToast(message);
+  }
+
+  private decodeJwtPayload(token: string): any | null {
+    try {
+      const payload = token.split('.')[1] ?? '';
+      if (!payload) {
+        return null;
+      }
+      const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = normalized + '==='.slice((normalized.length + 3) % 4);
+      return JSON.parse(atob(padded));
+    } catch {
+      return null;
+    }
   }
 
   private getPasskeyStorageKey(): string | null {
@@ -272,6 +311,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   setSection(section: SectionKey, options?: { preserveTransactionsRange?: boolean }) {
+    const previousSection = this.activeSection;
     this.activeSection = section;
     this.statusMessage = '';
     this.mobileMoreOpen = false;
@@ -286,6 +326,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
     if (section === 'audit') {
       this.auditPage = 1;
+    }
+    if (previousSection === 'spending' && section !== 'spending' && this.accountFilterEphemeral) {
+      this.selectedAccountIds = [];
+      this.accountFilterEphemeral = false;
     }
   }
 
@@ -302,6 +346,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       event.stopPropagation();
     }
     this.selectedAccountIds = [account.id];
+    this.accountFilterEphemeral = true;
     this.spendingDirection = 'OUT';
     this.spendingSelectedCategory = 'ALL';
     this.spendingTxPage = 1;
@@ -853,6 +898,33 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.statusMessage = err?.error?.message ?? 'Huishouden verwijderen mislukt.';
+      }
+    });
+  }
+
+  removeHouseholdMember(member: HouseholdBalanceMember) {
+    if (!this.token || !this.shareHouseholdId) {
+      return;
+    }
+    if (!this.isHouseholdOwner) {
+      this.statusMessage = 'Alleen de eigenaar kan leden verwijderen.';
+      return;
+    }
+    if (member.userId === this.currentUserId) {
+      this.statusMessage = 'Je kan jezelf niet verwijderen. Verwijder het huishouden.';
+      return;
+    }
+    const confirmed = window.confirm(`Lid ${member.email} verwijderen?`);
+    if (!confirmed) {
+      return;
+    }
+    this.api.removeHouseholdMember(this.token, this.shareHouseholdId, member.userId).subscribe({
+      next: () => {
+        this.statusMessage = 'Lid verwijderd.';
+        this.loadHouseholdBalance();
+      },
+      error: (err) => {
+        this.statusMessage = err?.error?.message ?? 'Lid verwijderen mislukt.';
       }
     });
   }
@@ -2116,6 +2188,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (!this.filterableBankAccounts.some((a) => a.id === accountId)) {
       return;
     }
+    this.accountFilterEphemeral = false;
     if (this.selectedAccountIds.includes(accountId)) {
       this.selectedAccountIds = this.selectedAccountIds.filter((id) => id !== accountId);
     } else {
@@ -2126,6 +2199,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   clearAccountFilter() {
     this.selectedAccountIds = [];
+    this.accountFilterEphemeral = false;
     this.transactionsPage = 1;
     this.loadTransactions();
   }
