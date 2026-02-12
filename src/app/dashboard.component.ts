@@ -37,6 +37,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   activeSection: SectionKey = 'overview';
   mobileMoreOpen = false;
   filtersCollapsed = true;
+  filterDragActive = false;
+  filterDragOffset = 0;
+  private filterDragStartY = 0;
+  private filterDragStartScrollTop = 0;
 
   providers: ProviderResponse[] = [];
   connections: ConnectionResponse[] = [];
@@ -369,6 +373,49 @@ export class DashboardComponent implements OnInit, OnDestroy {
   openCryptoDetails(asset: AccountResponse) {
     this.selectedCryptoAssetId = asset.id;
     this.loadCryptoTransactions();
+  }
+
+  onFilterTouchStart(event: TouchEvent) {
+    if (this.filtersCollapsed) {
+      return;
+    }
+    const touch = event.touches[0];
+    if (!touch) {
+      return;
+    }
+    const target = event.currentTarget as HTMLElement | null;
+    this.filterDragStartScrollTop = target ? target.scrollTop : 0;
+    this.filterDragActive = true;
+    this.filterDragStartY = touch.clientY;
+    this.filterDragOffset = 0;
+  }
+
+  onFilterTouchMove(event: TouchEvent) {
+    if (!this.filterDragActive || this.filtersCollapsed) {
+      return;
+    }
+    if (this.filterDragStartScrollTop > 0) {
+      return;
+    }
+    const touch = event.touches[0];
+    if (!touch) {
+      return;
+    }
+    const delta = touch.clientY - this.filterDragStartY;
+    if (delta > 0) {
+      this.filterDragOffset = Math.min(delta, 220);
+    }
+  }
+
+  onFilterTouchEnd() {
+    if (!this.filterDragActive) {
+      return;
+    }
+    if (this.filterDragOffset > 120) {
+      this.filtersCollapsed = true;
+    }
+    this.filterDragActive = false;
+    this.filterDragOffset = 0;
   }
 
   toggleMobileMore() {

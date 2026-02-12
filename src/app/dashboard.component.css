@@ -280,23 +280,43 @@
 
 .mobile-filter-summary {
   width: 100%;
-  border-radius: 16px;
-  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
   background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.12);
-  padding: 8px 12px;
-  display: flex;
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+  padding: 6px 10px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   color: #0f172a;
+}
+
+.mobile-filter-icon {
+  height: 26px;
+  width: 26px;
+  border-radius: 9px;
+  background: rgba(15, 23, 42, 0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: #0f172a;
+}
+
+.mobile-filter-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .mobile-filter-label {
   text-transform: uppercase;
   letter-spacing: 0.2em;
-  font-size: 9px;
+  font-size: 8px;
   color: rgba(15, 23, 42, 0.6);
 }
 
@@ -310,9 +330,15 @@
 }
 
 .mobile-filter-cta {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   color: var(--ios-blue);
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(10, 132, 255, 0.12);
+  border: 1px solid rgba(10, 132, 255, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 .app-bg {
   position: fixed;
@@ -530,6 +556,11 @@
   padding: var(--pad-md);
   box-shadow: var(--shadow-soft);
   backdrop-filter: blur(16px);
+  transition: transform 0.2s ease;
+}
+
+.filter-shell.is-dragging {
+  transition: none;
 }
 
 .filter-header {
@@ -612,6 +643,7 @@
   backdrop-filter: blur(4px);
   z-index: 40;
   padding-top: env(safe-area-inset-top);
+  margin-top: 0px !important;
 }
 
 .filter-grid {
@@ -1775,7 +1807,7 @@
   }
 
   .app-container {
-    padding-top: 12px;
+    padding-top: calc(6px + env(safe-area-inset-top));
     padding-bottom: 120px;
   }
 
@@ -1791,27 +1823,64 @@
     display: flex;
     position: sticky;
     top: 0;
-    padding-top: calc(8px + env(safe-area-inset-top));
-    padding-bottom: 8px;
+    padding-top: calc(6px + env(safe-area-inset-top));
+    padding-bottom: 6px;
     z-index: 30;
     flex-direction: column;
     align-items: stretch;
     gap: 8px;
+    border-radius: 18px;
+    background: rgba(248, 250, 252, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
+    backdrop-filter: blur(16px);
   }
 
   .mobile-header-top {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
   }
 
   .mobile-brand {
-    width: 100%;
+    width: auto;
+    padding: 0;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .mobile-title {
+    font-size: 13px;
+  }
+
+  .mobile-subtitle {
+    font-size: 10px;
   }
 
   .mobile-actions {
     width: 100%;
-    justify-content: flex-start;
-    flex: none;
+    justify-content: flex-end;
+    flex: 1;
+    padding: 2px 2px;
+    border-radius: 12px;
+    background: transparent;
+    border: none;
+  }
+
+  .mobile-action-btn {
+    padding: 4px 8px;
+    font-size: 9px;
+    border-radius: 10px;
+  }
+
+  .mobile-action-btn.icon {
+    padding: 4px 6px;
+  }
+
+  .mobile-action-chip {
+    padding: 4px 8px;
+    font-size: 9px;
   }
 
   .app-shell {
@@ -1832,14 +1901,17 @@
     left: 12px;
     right: 12px;
     z-index: 45;
-    max-height: calc(100vh - (var(--ios-nav-h) + env(safe-area-inset-bottom) + 24px));
+    max-height: 70vh;
     overflow: auto;
-    border-radius: 26px;
-    background: rgba(248, 250, 252, 0.98);
-    padding: 12px;
+    border-radius: 24px;
+    background: #f4f6fb;
+    padding: 0 12px 12px;
     display: flex;
     flex-direction: column;
     gap: 10px;
+    box-shadow: 0 22px 46px rgba(12, 20, 35, 0.28), 0 -10px 28px rgba(12, 20, 35, 0.12);
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   .filter-grid {
@@ -1891,6 +1963,56 @@
     grid-template-columns: 1fr auto;
     grid-auto-rows: auto;
     row-gap: 6px;
+    position: sticky;
+    top: 0;
+    background: #f4f6fb;
+    margin: 0 -12px;
+    padding: 12px 12px 8px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+    z-index: 2;
+  }
+
+  .filter-shell.filter-shell-open .filter-sheet-handle {
+    width: 52px;
+    height: 5px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.6);
+    box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.25);
+  }
+
+  .filter-shell.filter-shell-open .filter-sheet-title {
+    font-size: 14px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .filter-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+
+  .filter-input,
+  .filter-reset,
+  .filter-pill input {
+    height: 38px;
+    border-radius: 14px;
+  }
+
+  .filter-shell.filter-shell-open .filter-input,
+  .filter-shell.filter-shell-open .filter-reset,
+  .filter-shell.filter-shell-open .filter-pill,
+  .filter-shell.filter-shell-open .segment-group {
+    background: #ffffff;
+    border-color: rgba(148, 163, 184, 0.2);
+  }
+
+  .filter-shell.filter-shell-open .filter-pill input {
+    background: transparent;
+  }
+
+  .filter-reset {
+    justify-content: center;
   }
 
   .filter-shell.filter-shell-open .filter-sheet-handle {
@@ -1914,6 +2036,10 @@
   .filter-controls {
     grid-template-columns: 1fr;
     gap: 8px;
+  }
+
+  .filter-field-accounts-reset {
+    display: none;
   }
 
   .goal-grid {
@@ -1947,7 +2073,7 @@
 
   .filter-segments {
     margin-top: 8px;
-    max-height: 180px;
+    max-height: 140px;
     overflow-y: auto;
   }
 
@@ -1956,8 +2082,12 @@
     overflow-y: auto;
   }
 
+  .filter-shell.filter-shell-open .filter-grid {
+    padding-top: 4px;
+  }
+
   .segment-group {
-    background: #f8fafc;
+    background: #ffffff;
     border: 1px solid rgba(148, 163, 184, 0.2);
     border-radius: 14px;
     padding: 6px 8px;
@@ -2076,7 +2206,7 @@
 
   .filter-shell {
     padding: 8px 10px;
-    top: calc(var(--mobile-header-h) + env(safe-area-inset-top));
+    top: auto;
   }
 
   .filter-shell.filter-shell-open {

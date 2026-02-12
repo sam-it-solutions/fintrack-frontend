@@ -74,14 +74,26 @@
               <button class="mobile-action-btn ghost" (click)="logout()">Uitloggen</button>
             </div>
           </div>
-          <button class="mobile-filter-summary" *ngIf="filtersCollapsed" (click)="filtersCollapsed = false">
-            <span class="mobile-filter-label">Filters</span>
-            <span class="mobile-filter-value">{{ filterSummaryLabel }}</span>
-            <span class="mobile-filter-cta">Wijzig</span>
+          <button class="mobile-filter-summary" *ngIf="filtersCollapsed" (click)="filtersCollapsed = false" aria-label="Filters openen">
+            <span class="mobile-filter-icon">≡</span>
+            <span class="mobile-filter-text">
+              <span class="mobile-filter-label">Filters</span>
+              <span class="mobile-filter-value">{{ filterSummaryLabel }}</span>
+            </span>
+            <span class="mobile-filter-cta">Bewerk</span>
           </button>
         </div>
 
-        <section class="filter-shell" [class.filter-shell-collapsed]="filtersCollapsed" [class.filter-shell-open]="!filtersCollapsed" style="margin-top: 0px;">
+        <section class="filter-shell"
+          [class.filter-shell-collapsed]="filtersCollapsed"
+          [class.filter-shell-open]="!filtersCollapsed"
+          [class.is-dragging]="filterDragActive"
+          [style.transform]="filterDragOffset ? 'translateY(' + filterDragOffset + 'px)' : null"
+          (touchstart)="onFilterTouchStart($event)"
+          (touchmove)="onFilterTouchMove($event)"
+          (touchend)="onFilterTouchEnd()"
+          (touchcancel)="onFilterTouchEnd()"
+          style="margin-top: 0px;">
           <div class="filter-sheet-head" *ngIf="!filtersCollapsed">
             <span class="filter-sheet-handle"></span>
             <p class="filter-sheet-title">Filters</p>
@@ -126,7 +138,7 @@
                   <option *ngFor="let cat of categoriesAvailable" [value]="cat">{{ cat }}</option>
                 </select>
               </div>
-              <div class="filter-field">
+              <div class="filter-field filter-field-accounts-reset">
                 <label class="filter-label">Rekeningen</label>
                 <button class="filter-reset" (click)="clearAccountFilter()">Alle rekeningen</button>
               </div>
